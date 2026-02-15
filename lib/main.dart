@@ -8,7 +8,7 @@ import 'core/app_theme.dart';
 import 'core/app_constants.dart';
 import 'providers/antrian_provider.dart';
 import 'widgets/header_bar.dart';
-import 'widgets/history_section.dart';
+
 import 'widgets/input_form_section.dart';
 import 'widgets/preview_struk.dart';
 
@@ -99,9 +99,7 @@ class AntreanPage extends StatelessWidget {
                       }
                     },
                   ),
-                  const SizedBox(height: 24),
-                  // History
-                  const HistorySection(),
+
                   const SizedBox(height: 32),
                   // Footer
                   Text(

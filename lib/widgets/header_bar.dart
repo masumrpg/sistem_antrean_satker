@@ -5,6 +5,8 @@ import '../core/app_constants.dart';
 import '../providers/antrian_provider.dart';
 import 'package:provider/provider.dart';
 
+import '../pages/history_page.dart';
+
 class HeaderBar extends StatelessWidget {
   const HeaderBar({super.key});
 
@@ -98,6 +100,30 @@ class HeaderBar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
+          // History Button
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoryPage()),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.history_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           // Dark mode toggle
           InkWell(
             onTap: () => provider.toggleDarkMode(),
