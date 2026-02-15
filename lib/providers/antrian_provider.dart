@@ -112,6 +112,17 @@ class AntrianProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> resetAll() async {
+    _nama = '';
+    _selectedSubSatker = '';
+    _durasi = AppConstants.defaultDurasi;
+    _nomorFD = 1;
+    // Reset FD counter in DB to 0 (next will be 1)
+    final db = DatabaseHelper.instance;
+    await db.saveLastFDNumber(0);
+    notifyListeners();
+  }
+
   Future<void> _checkPrinter() async {
     try {
       final printers = await Printing.listPrinters();

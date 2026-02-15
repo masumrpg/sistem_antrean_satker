@@ -76,27 +76,55 @@ class InputFormSection extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Cetak Button
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () => provider.cetakStruk(context),
-                icon: const Icon(Icons.print_rounded, size: 22),
-                label: const Text('CETAK NOMOR ANTREAN'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
+            // Cetak & Reset Buttons
+            Row(
+              children: [
+                // Reset Button
+                SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showResetConfirmation(context, provider),
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    label: const Text('RESET'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                // Cetak Button
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () => provider.cetakStruk(context),
+                      icon: const Icon(Icons.print_rounded, size: 22),
+                      label: const Text('CETAK NOMOR ANTREAN'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentGreen,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -229,26 +257,48 @@ class InputFormSection extends StatelessWidget {
                         color: AppTheme.primaryBlue,
                       ),
                     )
-                  : SizedBox(
-                      width: 60,
-                      child: TextField(
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        onChanged: provider.setNomorFDFromString,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryBlue,
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Minus button
+                        _SmallStepperButton(
+                          icon: Icons.remove,
+                          onTap: () =>
+                              provider.setNomorFD(provider.nomorFD - 1),
+                          enabled: provider.nomorFD > 1,
                         ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
+                        const SizedBox(width: 6),
+                        // Editable number
+                        SizedBox(
+                          width: 54,
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            onChanged: provider.setNomorFDFromString,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                            ),
+                            controller: TextEditingController(
+                              text: provider.nomorFDFormatted,
+                            ),
+                          ),
                         ),
-                        controller: TextEditingController(
-                          text: provider.nomorFDFormatted,
+                        const SizedBox(width: 6),
+                        // Plus button
+                        _SmallStepperButton(
+                          icon: Icons.add,
+                          onTap: () =>
+                              provider.setNomorFD(provider.nomorFD + 1),
+                          enabled: true,
                         ),
-                      ),
+                      ],
                     ),
             ],
           ),
@@ -343,6 +393,57 @@ class InputFormSection extends StatelessWidget {
               Navigator.pop(ctx);
             },
             child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResetConfirmation(BuildContext context, AntrianProvider provider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.red,
+          size: 48,
+        ),
+        title: const Text(
+          'Reset Semua Data?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Semua data input akan direset ke nilai awal. Apakah Anda yakin?',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Batal'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              provider.resetAll();
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Reset'),
           ),
         ],
       ),
@@ -465,6 +566,38 @@ class _StepperButton extends StatelessWidget {
             color: Colors.white,
             size: 18,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallStepperButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const _SmallStepperButton({
+    required this.icon,
+    required this.onTap,
+    required this.enabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: enabled ? AppTheme.primaryBlue : Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, color: Colors.white, size: 16),
         ),
       ),
     );
