@@ -78,6 +78,17 @@ class DatabaseHelper {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getAntrianByDate(DateTime date) async {
+    final db = await database;
+    final dateStr = date.toIso8601String().substring(0, 10);
+    return await db.query(
+      'antrian',
+      where: "created_at LIKE ?",
+      whereArgs: ['$dateStr%'],
+      orderBy: 'id DESC',
+    );
+  }
+
   // --- Settings ---
 
   Future<int> getLastFDNumber() async {
