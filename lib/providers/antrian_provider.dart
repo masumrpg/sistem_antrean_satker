@@ -185,7 +185,11 @@ class AntrianProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> processOut(int nomorFD, String nama, String subSatker) async {
+  Future<Antrian?> processOut(
+    int nomorFD,
+    String nama,
+    String subSatker,
+  ) async {
     final db = DatabaseHelper.instance;
     final now = DateTime.now();
 
@@ -195,19 +199,25 @@ class AntrianProvider extends ChangeNotifier {
       subSatker,
       'OUT',
       now,
-      nama, // Taker Name (using same input for now)
-      subSatker, // Taker Satker (using same input)
+      nama, // Taker Name
+      subSatker, // Taker Satker
     );
 
     if (count > 0) {
-      // Refresh history if successful
-      _history = (await db.getAntrianToday())
-          .map((e) => Antrian.fromMap(e))
-          .toList();
-      notifyListeners();
-      return true;
+      // Fetch the updated item
+      final updatedItemMap = await db.getAntrianByFD(nomorFD);
+      if (updatedItemMap != null) {
+        final updatedItem = Antrian.fromMap(updatedItemMap);
+
+        // Refresh history
+        _history = (await db.getAntrianToday())
+            .map((e) => Antrian.fromMap(e))
+            .toList();
+        notifyListeners();
+        return updatedItem;
+      }
     }
-    return false;
+    return null;
   }
 
   Future<pw.Document> _generatePdf(Antrian antrian) async {

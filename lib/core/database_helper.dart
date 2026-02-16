@@ -78,6 +78,18 @@ class DatabaseHelper {
     return await db.insert('antrian', antrian);
   }
 
+  Future<Map<String, dynamic>?> getAntrianByFD(int nomorFD) async {
+    final db = await database;
+    final results = await db.query(
+      'antrian',
+      where: 'nomor_fd = ? AND date(created_at) = date(?)',
+      whereArgs: [nomorFD, DateTime.now().toIso8601String()],
+      orderBy: 'created_at DESC',
+      limit: 1,
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
   Future<int> updateAntrianStatus(
     int nomorFD,
     String nama,

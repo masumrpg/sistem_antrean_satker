@@ -154,6 +154,113 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
         ),
+        actions: antrian.status == 'IN'
+            ? [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showTakeDialog(antrian);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('PROSES KELUAR (AMBIL BERKAS)'),
+                  ),
+                ),
+              ]
+            : null,
+      ),
+    );
+  }
+
+  void _showTakeDialog(Antrian antrian) {
+    final nameController = TextEditingController(text: antrian.nama);
+    final satkerController = TextEditingController(text: antrian.subSatker);
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Ambil Berkas'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Pengambil',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: satkerController,
+                  decoration: const InputDecoration(
+                    labelText: 'Satker Pengambil',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.pop(ctx),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        final provider = context.read<AntrianProvider>();
+                        final result = await provider.processOut(
+                          antrian.nomorFD,
+                          nameController.text,
+                          satkerController.text,
+                        );
+
+                        if (context.mounted) {
+                          Navigator.pop(ctx); // Close take dialog
+                          if (result != null) {
+                            _showDetailDialog(result); // Show updated detail
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Berkas berhasil diambil'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            _loadHistory(); // Refresh list
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Gagal memproses data'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Simpan'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

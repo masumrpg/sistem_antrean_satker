@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
+import '../models/antrian_model.dart';
 import '../providers/antrian_provider.dart';
 
 class OutFormSection extends StatefulWidget {
@@ -43,7 +44,7 @@ class _OutFormSectionState extends State<OutFormSection> {
     final provider = context.read<AntrianProvider>();
     final fdNumber = int.tryParse(_fdController.text) ?? 0;
 
-    final success = await provider.processOut(
+    final result = await provider.processOut(
       fdNumber,
       _namaController.text,
       _selectedSubSatker,
@@ -52,8 +53,8 @@ class _OutFormSectionState extends State<OutFormSection> {
     setState(() => _isLoading = false);
 
     if (mounted) {
-      if (success) {
-        _showSuccessDialog(fdNumber);
+      if (result != null) {
+        _showSuccessDialog(result);
         _resetForm();
       } else {
         _showErrorDialog();
@@ -67,19 +68,53 @@ class _OutFormSectionState extends State<OutFormSection> {
     setState(() => _selectedSubSatker = '');
   }
 
-  void _showSuccessDialog(int fdNumber) {
+  void _showSuccessDialog(Antrian antrian) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 8),
-            Text('Berhasil'),
+            Text('Berhasil Keluar'),
           ],
         ),
-        content: Text(
-            'Antrean FD ${fdNumber.toString().padLeft(3, '0')} berhasil diproses KELUAR.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Antrean FD ${antrian.nomorFD.toString().padLeft(3, '0')} telah diperbarui.',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                children: [
+                  _buildInfoRow(
+                    'Nomor FD',
+                    antrian.nomorFD.toString().padLeft(3, '0'),
+                  ),
+                  const Divider(height: 16),
+                  _buildInfoRow('Nama Pengunjung', antrian.nama),
+                  const Divider(height: 16),
+                  _buildInfoRow('Satker Tujuan', antrian.subSatker),
+                  const Divider(height: 16),
+                  _buildInfoRow('Diambil Oleh', antrian.takerName ?? '-'),
+                  const Divider(height: 16),
+                  _buildInfoRow('Satker Pengambil', antrian.takerSatker ?? '-'),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -87,6 +122,19 @@ class _OutFormSectionState extends State<OutFormSection> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
@@ -102,7 +150,8 @@ class _OutFormSectionState extends State<OutFormSection> {
           ],
         ),
         content: const Text(
-            'Data tidak ditemukan atau sudah KELUAR.\nPastikan Nomor FD, Nama (Pengunjung), dan Satker sesuai dengan data MASUK.'),
+          'Data tidak ditemukan atau sudah KELUAR.\nPastikan Nomor FD, Nama, dan Satker sesuai.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
