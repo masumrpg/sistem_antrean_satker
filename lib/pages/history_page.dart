@@ -122,8 +122,24 @@ class _HistoryPageState extends State<HistoryPage> {
             const Divider(height: 24),
             _buildDetailRow('Durasi', '${antrian.durasi} Hari', isDark),
             const Divider(height: 24),
+            _buildDetailRow('Status', antrian.status, isDark),
+            if (antrian.status == 'OUT' && antrian.outAt != null) ...[
+              const Divider(height: 24),
+              _buildDetailRow(
+                'Tgl Ambil',
+                dateFormat.format(antrian.outAt!),
+                isDark,
+              ),
+              const Divider(height: 24),
+              _buildDetailRow(
+                'Diambil Oleh',
+                '${antrian.takerName ?? '-'} (${antrian.takerSatker ?? '-'})',
+                isDark,
+              ),
+            ],
+            const Divider(height: 24),
             _buildDetailRow(
-              'Waktu',
+              'Waktu Masuk',
               dateFormat.format(antrian.createdAt),
               isDark,
             ),
@@ -354,22 +370,44 @@ class _HistoryPageState extends State<HistoryPage> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 16,
-                                color: isDark
-                                    ? Colors.white24
-                                    : Colors.grey.shade300,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: antrian.status == 'OUT'
+                                      ? Colors.green.withValues(alpha: 0.1)
+                                      : Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: antrian.status == 'OUT'
+                                        ? Colors.green.withValues(alpha: 0.5)
+                                        : Colors.orange.withValues(alpha: 0.5),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  antrian.status,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: antrian.status == 'OUT'
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
     );
   }
 }

@@ -131,4 +131,43 @@ class AppTheme {
       ),
     );
   }
+
+  static InputDecoration inputDecoration({
+    required String hint,
+    required bool isDark,
+    IconData? prefixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        color: isDark ? Colors.white38 : Colors.grey.shade400,
+        fontSize: 14,
+      ),
+      prefixIcon: prefixIcon != null
+          ? Icon(
+              prefixIcon,
+              color: isDark ? Colors.white54 : Colors.grey.shade400,
+            )
+          : null,
+      filled: true,
+      fillColor: isDark ? const Color(0xFF1E2A45) : const Color(0xFFF9FAFB),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF2D3A55) : borderColor,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF2D3A55) : borderColor,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: primaryBlue, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
 }

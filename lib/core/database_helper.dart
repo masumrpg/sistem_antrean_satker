@@ -26,8 +26,9 @@ class DatabaseHelper {
     return await databaseFactoryFfi.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
       ),
     );
   }
@@ -40,7 +41,11 @@ class DatabaseHelper {
         sub_satker TEXT NOT NULL,
         nomor_fd INTEGER NOT NULL,
         durasi INTEGER NOT NULL,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        status TEXT DEFAULT 'IN',
+        out_at TEXT,
+        taker_name TEXT,
+        taker_satker TEXT
       )
     ''');
 
@@ -55,11 +60,58 @@ class DatabaseHelper {
     await db.insert('settings', {'key': 'last_fd_number', 'value': '0'});
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        "ALTER TABLE antrian ADD COLUMN status TEXT DEFAULT 'IN'",
+      );
+      await db.execute("ALTER TABLE antrian ADD COLUMN out_at TEXT");
+      await db.execute("ALTER TABLE antrian ADD COLUMN taker_name TEXT");
+      await db.execute("ALTER TABLE antrian ADD COLUMN taker_satker TEXT");
+    }
+  }
+
   // --- Antrian CRUD ---
 
   Future<int> insertAntrian(Map<String, dynamic> antrian) async {
     final db = await database;
     return await db.insert('antrian', antrian);
+  }
+
+  Future<int> updateAntrianStatus(
+    int nomorFD,
+    String nama,
+    String subSatker,
+    String status,
+    DateTime outAt,
+    String takerName,
+    String takerSatker,
+  ) async {
+    final db = await database;
+    // Find the record first to ensure it matches
+    // Note: We match by FD, Name (Visitor), and SubSatker to ensure we are updating the correct 'IN' record
+    final List<Map<String, dynamic>> maps = await db.query(
+      'antrian',
+      where: 'nomor_fd = ? AND nama = ? AND sub_satker = ? AND status = ?',
+      whereArgs: [nomorFD, nama, subSatker, 'IN'],
+    );
+
+    if (maps.isEmpty) {
+      return 0; // Not found or already OUT
+    }
+
+    final id = maps.first['id'] as int;
+    return await db.update(
+      'antrian',
+      {
+        'status': status,
+        'out_at': outAt.toIso8601String(),
+        'taker_name': takerName,
+        'taker_satker': takerSatker,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getAllAntrian() async {

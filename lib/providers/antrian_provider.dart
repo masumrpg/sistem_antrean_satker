@@ -184,9 +184,40 @@ class AntrianProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> processOut(int nomorFD, String nama, String subSatker) async {
+    final db = DatabaseHelper.instance;
+    final now = DateTime.now();
+
+    final count = await db.updateAntrianStatus(
+      nomorFD,
+      nama,
+      subSatker,
+      'OUT',
+      now,
+      nama, // Taker Name (using same input for now)
+      subSatker, // Taker Satker (using same input)
+    );
+
+    if (count > 0) {
+      // Refresh history if successful
+      _history = (await db.getAntrianToday())
+          .map((e) => Antrian.fromMap(e))
+          .toList();
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
   Future<pw.Document> _generatePdf(Antrian antrian) async {
     final pdf = pw.Document();
-    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
+    final dateFormat = DateFormat('dd MMMM yyyy', 'id_ID');
+    final timeFormat = DateFormat('HH:mm', 'id_ID');
+
+    // Calculate Return Date
+    final returnDate = antrian.createdAt.add(Duration(days: antrian.durasi));
+    final returnDateStr =
+        '${dateFormat.format(returnDate)} (${antrian.durasi} hari)';
 
     pdf.addPage(
       pw.Page(
@@ -202,14 +233,21 @@ class AntrianProvider extends ChangeNotifier {
               pw.Text(
                 'SISTEM ANTREAN SATKER',
                 style: pw.TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 4),
               pw.Text(
                 'Dashboard Pelayanan Terpadu',
-                style: const pw.TextStyle(fontSize: 8),
+                style: const pw.TextStyle(fontSize: 7),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                'TANDA TERIMA BERKAS', // New Title
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
               pw.SizedBox(height: 8),
               pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
@@ -217,24 +255,24 @@ class AntrianProvider extends ChangeNotifier {
               pw.Text(
                 'NOMOR ANTREAN',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 8),
+              pw.SizedBox(height: 4),
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
                 decoration: pw.BoxDecoration(
-                  border: pw.Border.all(),
+                  border: pw.Border.all(width: 2),
                   borderRadius: pw.BorderRadius.circular(8),
                 ),
                 child: pw.Text(
                   antrian.nomorFD.toString().padLeft(3, '0'),
                   style: pw.TextStyle(
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -244,21 +282,35 @@ class AntrianProvider extends ChangeNotifier {
               pw.SizedBox(height: 8),
               _buildPdfRow('No. FD', antrian.nomorFD.toString().padLeft(3, '0')),
               _buildPdfRow('Nama', antrian.nama),
-              _buildPdfRow('Tujuan', antrian.subSatker),
+              _buildPdfRow('Satker', antrian.subSatker),
               _buildPdfRow('Durasi', '${antrian.durasi} Hari'),
-              _buildPdfRow('Tanggal', dateFormat.format(antrian.createdAt)),
-              pw.SizedBox(height: 12),
+              _buildPdfRow(
+                'Waktu Masuk',
+                '${dateFormat.format(antrian.createdAt)} ${timeFormat.format(antrian.createdAt)}',
+              ),
+              pw.SizedBox(height: 8),
+              pw.Divider(thickness: 0.5),
+              pw.SizedBox(height: 8),
+              _buildPdfRow(
+                'Tanggal Kembali',
+                returnDateStr,
+                isBold: true,
+              ), // Return Date
+              pw.SizedBox(height: 16),
               pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 8),
               pw.Text(
-                'Terima kasih atas kunjungan Anda',
-                style: const pw.TextStyle(fontSize: 8),
+                'Harap bawa struk ini saat pengambilan berkas.',
+                style: const pw.TextStyle(fontSize: 7),
                 textAlign: pw.TextAlign.center,
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                '© ${DateTime.now().year} Satker Queue Management System',
-                style: const pw.TextStyle(fontSize: 6),
+                '© ${DateTime.now().year} Sistem Antrean Satker',
+                style: const pw.TextStyle(
+                  fontSize: 6,
+                  color: PdfColors.grey600,
+                ),
                 textAlign: pw.TextAlign.center,
               ),
             ],
@@ -270,25 +322,24 @@ class AntrianProvider extends ChangeNotifier {
     return pdf;
   }
 
-  pw.Widget _buildPdfRow(String label, String value) {
+  pw.Widget _buildPdfRow(String label, String value, {bool isBold = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(
-            '$label:',
-            style: const pw.TextStyle(fontSize: 9),
-          ),
+          pw.Text('$label:', style: const pw.TextStyle(fontSize: 8)),
           pw.Text(
             value,
             style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
+              fontSize: 8,
+              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
         ],
       ),
     );
   }
+
+
 }

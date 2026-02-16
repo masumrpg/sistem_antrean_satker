@@ -11,6 +11,7 @@ class AppConstants {
   static const String appTitle = 'SISTEM ANTREAN SATKER';
   static const String appSubtitle = 'Dashboard Pelayanan Terpadu';
   static const String appVersion = 'v2.0';
+  static const String receiptTitle = 'TANDA TERIMA BERKAS';
 
   static const List<SubSatker> subSatkerList = [
     SubSatker(name: 'Sekretariat', icon: Icons.business),

@@ -5,6 +5,10 @@ class Antrian {
   final int nomorFD;
   final int durasi;
   final DateTime createdAt;
+  final String status; // 'IN' or 'OUT'
+  final DateTime? outAt;
+  final String? takerName;
+  final String? takerSatker;
 
   Antrian({
     this.id,
@@ -13,6 +17,10 @@ class Antrian {
     required this.nomorFD,
     required this.durasi,
     required this.createdAt,
+    this.status = 'IN',
+    this.outAt,
+    this.takerName,
+    this.takerSatker,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +30,10 @@ class Antrian {
       'nomor_fd': nomorFD,
       'durasi': durasi,
       'created_at': createdAt.toIso8601String(),
+      'status': status,
+      'out_at': outAt?.toIso8601String(),
+      'taker_name': takerName,
+      'taker_satker': takerSatker,
     };
   }
 
@@ -33,6 +45,12 @@ class Antrian {
       nomorFD: map['nomor_fd'] as int,
       durasi: map['durasi'] as int,
       createdAt: DateTime.parse(map['created_at'] as String),
+      status: map['status'] as String? ?? 'IN',
+      outAt: map['out_at'] != null
+          ? DateTime.parse(map['out_at'] as String)
+          : null,
+      takerName: map['taker_name'] as String?,
+      takerSatker: map['taker_satker'] as String?,
     );
   }
 }
