@@ -181,6 +181,85 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  void _showResetDialog(BuildContext context, AntrianProvider provider) {
+    final textController = TextEditingController();
+    bool isConfirmEnabled = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Reset Semua Data?'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tindakan ini akan menghapus seluruh riwayat antrean secara permanen.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Ketik "RESET" untuk mengonfirmasi:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: textController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'RESET',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+                onChanged: (val) {
+                  setState(() => isConfirmEnabled = val == 'RESET');
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: isConfirmEnabled
+                  ? () async {
+                      await provider.resetAllData();
+                      if (context.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Seluruh data berhasil dihapus'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        _loadHistory();
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('RESET SEKARANG'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTakeDialog(Antrian antrian) {
     final nameController = TextEditingController(text: antrian.nama);
     final satkerController = TextEditingController(text: antrian.subSatker);
@@ -355,6 +434,11 @@ class _HistoryPageState extends State<HistoryPage> {
               onPressed: _loadHistory,
               icon: const Icon(Icons.refresh_rounded),
               tooltip: 'Refresh',
+            ),
+            IconButton(
+              onPressed: () => _showResetDialog(context, provider),
+              icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+              tooltip: 'Reset Data',
             ),
             const SizedBox(width: 8),
           ],

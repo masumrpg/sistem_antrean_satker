@@ -351,4 +351,10 @@ class AntrianProvider extends ChangeNotifier {
   }
 
 
+  Future<void> resetAllData() async {
+    await DatabaseHelper.instance.deleteAllAntrian();
+    _history = [];
+    _nomorFD = AppConstants.defaultFDStart;
+    notifyListeners();
+  }
 }

@@ -78,6 +78,11 @@ class DatabaseHelper {
     return await db.insert('antrian', antrian);
   }
 
+  Future<int> deleteAllAntrian() async {
+    final db = await database;
+    return await db.delete('antrian');
+  }
+
   Future<Map<String, dynamic>?> getAntrianByFD(int nomorFD) async {
     final db = await database;
     final results = await db.query(
