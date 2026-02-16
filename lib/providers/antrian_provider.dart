@@ -163,7 +163,8 @@ class AntrianProvider extends ChangeNotifier {
 
     await Printing.layoutPdf(
       onLayout: (_) => pdfDoc.save(),
-      name: 'Struk_Antrian_$nomorFDFormatted',
+      name:
+          'Struk-${antrian.nomorFD.toString().padLeft(3, '0')}-${DateFormat('ddMMyyyy').format(antrian.createdAt)}-IN',
       format: PdfPageFormat(
         72 * PdfPageFormat.mm,
         200 * PdfPageFormat.mm,
