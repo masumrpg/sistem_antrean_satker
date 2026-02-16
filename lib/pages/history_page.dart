@@ -415,8 +415,8 @@ class _HistoryPageState extends State<HistoryPage> {
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'Semua'),
-              Tab(text: 'Titip (IN)'),
-              Tab(text: 'Ambil (OUT)'),
+              Tab(text: 'Belum Diambil'),
+              Tab(text: 'Sudah Diambil'),
             ],
           ),
           actions: [
