@@ -261,7 +261,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   void _showTakeDialog(Antrian antrian) {
-    final nameController = TextEditingController(text: antrian.nama);
+    final nameController = TextEditingController();
     final satkerController = TextEditingController(text: antrian.subSatker);
     bool isLoading = false;
 
@@ -279,6 +279,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   controller: nameController,
                   decoration: const InputDecoration(
                     labelText: 'Nama Pengambil',
+                    hintText: 'Siapa yang mengambil berkas?',
                     border: OutlineInputBorder(),
                   ),
                 ),

@@ -185,18 +185,32 @@ class AntrianProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Antrian?> findAntrianByFD(int fd, {DateTime? date}) async {
+    final db = DatabaseHelper.instance;
+    final map = await db.getAntrianByFD(fd, date: date);
+    if (map != null) {
+      final antrian = Antrian.fromMap(map);
+      // Only return if it's still 'IN' (deposits ready to be picked up)
+      if (antrian.status == 'IN') {
+        return antrian;
+      }
+    }
+    return null;
+  }
+
   Future<Antrian?> processOut(
     int nomorFD,
     String nama,
-    String subSatker,
-  ) async {
+    String subSatker, {
+    DateTime? date,
+  }) async {
     final db = DatabaseHelper.instance;
     final now = DateTime.now();
+    final searchDate = date ?? now;
 
     final count = await db.updateAntrianStatus(
       nomorFD,
-      nama,
-      subSatker,
+      searchDate,
       'OUT',
       now,
       nama, // Taker Name

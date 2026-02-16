@@ -83,12 +83,16 @@ class DatabaseHelper {
     return await db.delete('antrian');
   }
 
-  Future<Map<String, dynamic>?> getAntrianByFD(int nomorFD) async {
+  Future<Map<String, dynamic>?> getAntrianByFD(
+    int nomorFD, {
+    DateTime? date,
+  }) async {
     final db = await database;
+    final searchDate = date ?? DateTime.now();
     final results = await db.query(
       'antrian',
       where: 'nomor_fd = ? AND date(created_at) = date(?)',
-      whereArgs: [nomorFD, DateTime.now().toIso8601String()],
+      whereArgs: [nomorFD, searchDate.toIso8601String()],
       orderBy: 'created_at DESC',
       limit: 1,
     );
@@ -97,20 +101,20 @@ class DatabaseHelper {
 
   Future<int> updateAntrianStatus(
     int nomorFD,
-    String nama,
-    String subSatker,
+    DateTime recordDate,
     String status,
     DateTime outAt,
     String takerName,
     String takerSatker,
   ) async {
     final db = await database;
-    // Find the record first to ensure it matches
-    // Note: We match by FD, Name (Visitor), and SubSatker to ensure we are updating the correct 'IN' record
+    final dateStr = recordDate.toIso8601String().substring(0, 10);
+
+    // Find that day's 'IN' record with this FD
     final List<Map<String, dynamic>> maps = await db.query(
       'antrian',
-      where: 'nomor_fd = ? AND nama = ? AND sub_satker = ? AND status = ?',
-      whereArgs: [nomorFD, nama, subSatker, 'IN'],
+      where: 'nomor_fd = ? AND created_at LIKE ? AND status = ?',
+      whereArgs: [nomorFD, '$dateStr%', 'IN'],
     );
 
     if (maps.isEmpty) {
