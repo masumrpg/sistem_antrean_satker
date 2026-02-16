@@ -7,6 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/app_theme.dart';
 import 'core/app_constants.dart';
 import 'providers/antrian_provider.dart';
+import 'pages/splash_screen.dart';
 import 'widgets/header_bar.dart';
 
 import 'widgets/input_form_section.dart';
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme(),
             darkTheme: AppTheme.darkTheme(),
             themeMode: provider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: const AntreanPage(),
+            home: const SplashScreen(),
           );
         },
       ),
