@@ -77,7 +77,7 @@ class _OutFormSectionState extends State<OutFormSection> {
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 8),
-            Text('Berhasil Keluar'),
+            Text('Berhasil Diambil'),
           ],
         ),
         content: Column(
@@ -185,7 +185,7 @@ class _OutFormSectionState extends State<OutFormSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'PENGAMBILAN BERKAS (OUT)',
+                      'PENGAMBILAN BERKAS (KELUAR)',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -242,7 +242,7 @@ class _OutFormSectionState extends State<OutFormSection> {
 
           // Nama Pengambil Input
           Text(
-            'DITERIMA OLEH (NAMA)',
+            'DIAMBIL OLEH (NAMA)',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -392,7 +392,7 @@ class _OutFormSectionState extends State<OutFormSection> {
                         Icon(Icons.check_circle_outline_rounded),
                         SizedBox(width: 8),
                         Text(
-                          'PROSES KELUAR',
+                          'PROSES PENGAMBILAN',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

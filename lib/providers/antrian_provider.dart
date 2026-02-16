@@ -225,10 +225,7 @@ class AntrianProvider extends ChangeNotifier {
     final dateFormat = DateFormat('dd MMMM yyyy', 'id_ID');
     final timeFormat = DateFormat('HH:mm', 'id_ID');
 
-    // Calculate Return Date
-    final returnDate = antrian.createdAt.add(Duration(days: antrian.durasi));
-    final returnDateStr =
-        '${dateFormat.format(returnDate)} (${antrian.durasi} hari)';
+    // PDF setup
 
     pdf.addPage(
       pw.Page(
@@ -254,9 +251,9 @@ class AntrianProvider extends ChangeNotifier {
               ),
               pw.SizedBox(height: 8),
               pw.Text(
-                'TANDA TERIMA BERKAS', // New Title
+                'BUKTI PENITIPAN BERKAS',
                 style: pw.TextStyle(
-                  fontSize: 12,
+                  fontSize: 16,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -296,17 +293,18 @@ class AntrianProvider extends ChangeNotifier {
               _buildPdfRow('Satker', antrian.subSatker),
               _buildPdfRow('Durasi', '${antrian.durasi} Hari'),
               _buildPdfRow(
-                'Waktu Masuk',
+                'Tgl. Penitipan',
                 '${dateFormat.format(antrian.createdAt)} ${timeFormat.format(antrian.createdAt)}',
               ),
               pw.SizedBox(height: 8),
               pw.Divider(thickness: 0.5),
               pw.SizedBox(height: 8),
               _buildPdfRow(
-                'Tanggal Kembali',
-                returnDateStr,
-                isBold: true,
-              ), // Return Date
+                'Tgl. Pengambilan',
+                dateFormat.format(
+                  antrian.createdAt.add(Duration(days: antrian.durasi)),
+                ),
+              ),
               pw.SizedBox(height: 16),
               pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
               pw.SizedBox(height: 8),

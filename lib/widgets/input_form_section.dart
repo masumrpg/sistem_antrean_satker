@@ -106,11 +106,13 @@ class InputFormSection extends StatelessWidget {
                   child: SizedBox(
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: () => provider.cetakStruk(context),
-                      icon: const Icon(Icons.print_rounded, size: 22),
-                      label: const Text('CETAK NOMOR ANTREAN'),
+                      onPressed: provider.isPrinterConnected
+                          ? () => provider.cetakStruk(context)
+                          : null,
+                      icon: const Icon(Icons.print_rounded, size: 20),
+                      label: const Text('SIMPAN & CETAK NOMOR'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentGreen,
+                        backgroundColor: AppTheme.primaryBlue,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

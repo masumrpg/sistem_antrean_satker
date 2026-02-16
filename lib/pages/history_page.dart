@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/app_theme.dart';
+import '../core/app_constants.dart';
 import '../core/database_helper.dart';
 import '../models/antrian_model.dart';
 import '../providers/antrian_provider.dart';
@@ -171,7 +172,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('PROSES KELUAR (AMBIL BERKAS)'),
+                    child: const Text('PROSES PENGAMBILAN'),
                   ),
                 ),
               ]
@@ -203,12 +204,26 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: satkerController,
+                DropdownButtonFormField<String>(
+                  initialValue:
+                      AppConstants.subSatkerList.any(
+                        (e) => e.name == satkerController.text,
+                      )
+                      ? satkerController.text
+                      : AppConstants.subSatkerList.first.name,
                   decoration: const InputDecoration(
                     labelText: 'Satker Pengambil',
                     border: OutlineInputBorder(),
                   ),
+                  items: AppConstants.subSatkerList.map((sub) {
+                    return DropdownMenuItem(
+                      value: sub.name,
+                      child: Text(sub.name),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) satkerController.text = val;
+                  },
                 ),
               ],
             ),
@@ -320,8 +335,8 @@ class _HistoryPageState extends State<HistoryPage> {
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'Semua'),
-              Tab(text: 'Masuk (IN)'),
-              Tab(text: 'Keluar (OUT)'),
+              Tab(text: 'Titip (IN)'),
+              Tab(text: 'Ambil (OUT)'),
             ],
           ),
           actions: [
@@ -481,6 +496,46 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                           ],
                         ),
+                        if (antrian.status == 'OUT' &&
+                            antrian.takerName != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Colors.green.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.person_pin_rounded,
+                                  size: 14,
+                                  color: Colors.green.shade700,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'DIAMBIL OLEH: ${antrian.takerName} (${antrian.takerSatker ?? "-"})',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green.shade800,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -518,7 +573,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                         ),
                         child: Text(
-                          antrian.status,
+                          antrian.status == 'OUT' ? 'DIAMBIL' : 'DITITIPKAN',
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,

@@ -10,6 +10,12 @@ class Antrian {
   final String? takerName;
   final String? takerSatker;
 
+  static const String statusIn = 'IN'; // Penitipan
+  static const String statusOut = 'OUT'; // Pengambilan
+
+  bool get isWaiting => status == statusIn;
+  bool get isTaken => status == statusOut;
+
   Antrian({
     this.id,
     required this.nama,
