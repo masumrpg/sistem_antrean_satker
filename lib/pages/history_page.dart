@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/app_theme.dart';
@@ -59,6 +60,100 @@ class _HistoryPageState extends State<HistoryPage> {
   void _clearFilter() {
     setState(() => _selectedDate = null);
     _loadHistory();
+  }
+
+  Future<void> _handleExport() async {
+    final result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Simpan Database',
+      fileName:
+          'backup_siasat_${DateFormat('yyyyMMdd').format(DateTime.now())}.db',
+      type: FileType.any,
+    );
+
+    if (result != null) {
+      if (mounted) {
+        try {
+          await context.read<AntrianProvider>().exportData(result);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Database berhasil diekspor'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Gagal mengekspor data: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _handleImport() async {
+    // 1. Confirmation
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Impor Database?'),
+        content: const Text(
+          'Tindakan ini akan mengganti seluruh data saat ini dengan data dari file yang dipilih.\n\nPASTIKAN ANDA SUDAH MELAKUKAN BACKUP TERLEBIH DAHULU.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('SAYA MENGERTI, LANJUTKAN'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // 2. File Picking
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.single.path != null) {
+      if (mounted) {
+        try {
+          await context.read<AntrianProvider>().importData(
+            result.files.single.path!,
+          );
+          await _loadHistory();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Database berhasil diimpor'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Gagal mengimpor data: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    }
   }
 
   void _showDetailDialog(Antrian antrian) {
@@ -476,6 +571,16 @@ class _HistoryPageState extends State<HistoryPage> {
               onPressed: _loadHistory,
               icon: const Icon(Icons.refresh_rounded),
               tooltip: 'Refresh',
+            ),
+            IconButton(
+              onPressed: _handleExport,
+              icon: const Icon(Icons.upload_rounded),
+              tooltip: 'Ekspor Data',
+            ),
+            IconButton(
+              onPressed: _handleImport,
+              icon: const Icon(Icons.download_rounded),
+              tooltip: 'Impor Data',
             ),
             IconButton(
               onPressed: () => _showResetDialog(context, provider),

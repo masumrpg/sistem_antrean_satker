@@ -532,6 +532,20 @@ class AntrianProvider extends ChangeNotifier {
     _nomorFD = AppConstants.defaultFDStart;
     notifyListeners();
   }
+
+  Future<void> exportData(String targetPath) async {
+    await DatabaseHelper.instance.backupDatabase(targetPath);
+  }
+
+  Future<void> importData(String sourcePath) async {
+    final db = DatabaseHelper.instance;
+    await db.restoreDatabase(sourcePath);
+    // Refresh history
+    _history = (await db.getAntrianToday())
+        .map((e) => Antrian.fromMap(e))
+        .toList();
+    notifyListeners();
+  }
 }
 
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {

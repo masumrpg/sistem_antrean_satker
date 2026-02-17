@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,35 @@ class DatabaseHelper {
   static DatabaseHelper get instance {
     _instance ??= DatabaseHelper._();
     return _instance!;
+  }
+
+  Future<String> getDatabasePath() async {
+    final appDir = await getApplicationSupportDirectory();
+    return p.join(appDir.path, 'antrean_satker.db');
+  }
+
+  Future<void> backupDatabase(String targetPath) async {
+    final dbPath = await getDatabasePath();
+    final dbFile = File(dbPath);
+    if (await dbFile.exists()) {
+      await dbFile.copy(targetPath);
+    }
+  }
+
+  Future<void> restoreDatabase(String sourcePath) async {
+    // 1. Close current connection
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+
+    // 2. Overwrite database file
+    final dbPath = await getDatabasePath();
+    final sourceFile = File(sourcePath);
+    await sourceFile.copy(dbPath);
+
+    // 3. Re-initialize
+    await database;
   }
 
   Future<Database> get database async {
