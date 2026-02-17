@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'pubspec.yaml'
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      should_release: ${{ steps.check_tag.outputs.exists == 'false' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          git fetch --tags
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.version.outputs.tag }} already exists, skipping release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.version.outputs.tag }} does not exist, creating release"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+  build:
+    needs: create-tag
+    if: needs.create-tag.outputs.should_release == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            asset_name: sistem_antrean_satker-windows.zip
+          - os: ubuntu-latest
+            platform: linux
+            asset_name: sistem_antrean_satker-linux.tar.gz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable desktop platform
+        run: |
+          if [ "${{ matrix.platform }}" == "windows" ]; then
+            flutter config --enable-windows-desktop
+          else
+            flutter config --enable-linux-desktop
+          fi
+
+      - name: Install platform dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build executable
+        run: |
+          if [ "${{ matrix.platform }}" == "windows" ]; then
+            flutter build windows --release
+          else
+            flutter build linux --release
+          fi
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          mkdir release
+          if [ "${{ matrix.platform }}" == "windows" ]; then
+            cp -r build/windows/x64/runner/Release/* release/
+            7z a -tzip ${{ matrix.asset_name }} release/*
+          else
+            cp -r build/linux/x64/release/bundle/* release/
+            tar -czf ${{ matrix.asset_name }} -C release .
+          fi
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ needs.create-tag.outputs.version }}
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          files: ${{ matrix.asset_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
