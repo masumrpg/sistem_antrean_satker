@@ -44,9 +44,8 @@ jobs:
       - name: Package Linux bundle as deb
         run: |
           chmod +x tool/package_linux.sh
-          tool/package_linux.sh
-          cd dist/linux
-          zip -r ../../linux.zip *.deb
+          ./tool/package_linux.sh
+          zip -j linux.zip dist/linux/*.deb
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4

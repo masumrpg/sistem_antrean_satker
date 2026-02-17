@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Configuration
-APP_NAME="sistem_antrean_satker"
+APP_NAME="sistem-antrean-satker"
+BINARY_NAME="sistem_antrean_satker"
 VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //; s/+.*//')
 MAINTAINER="ma-sum <masum@example.com>"
 DESCRIPTION="Sistem Antrean Satker application"
@@ -26,7 +27,7 @@ cp -r "$BUILD_DIR/"* "$DEB_DIR/usr/lib/$APP_NAME/"
 # Create executable link
 cat <<EOF > "$DEB_DIR/usr/bin/$APP_NAME"
 #!/bin/bash
-/usr/lib/$APP_NAME/$APP_NAME "\$@"
+/usr/lib/$APP_NAME/$BINARY_NAME "\$@"
 EOF
 chmod +x "$DEB_DIR/usr/bin/$APP_NAME"
 
@@ -35,7 +36,7 @@ cat <<EOF > "$DEB_DIR/usr/share/applications/$APP_NAME.desktop"
 [Desktop Entry]
 Name=Sistem Antrean Satker
 Exec=$APP_NAME
-Icon=$APP_NAME
+Icon=$BINARY_NAME
 Type=Application
 Categories=Utility;
 EOF
