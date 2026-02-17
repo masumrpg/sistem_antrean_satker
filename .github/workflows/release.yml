@@ -3,7 +3,7 @@ name: Release Builds
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'pubspec.yaml'
 
