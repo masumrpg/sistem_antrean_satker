@@ -1,4 +1,4 @@
-#define AppName "Sistem Antrean Satker"
+#define AppName "SIASAT"
 #define AppExeName "sistem_antrean_satker.exe"
 #define AppPublisher "ma-sum"
 #define BuildDir "..\build\windows\x64\runner\Release"
@@ -12,7 +12,8 @@ AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 DisableProgramGroupPage=yes
 OutputDir={#DistDir}
-OutputBaseFilename=sistem_antrean_satker_setup
+OutputBaseFilename=SIASAT_setup
+SetupIconFile=..\assets\images\logo.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

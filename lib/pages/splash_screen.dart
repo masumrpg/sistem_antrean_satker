@@ -77,15 +77,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      width: 120,
+                      height: 120,
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.local_activity_rounded,
-                        size: 80,
-                        color: AppTheme.primaryBlue,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -100,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Satuan Kerja Management System',
+                      AppConstants.appSubtitle,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade500,

@@ -42,14 +42,12 @@ class HeaderBar extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.grid_view_rounded,
-              color: Colors.white,
-              size: 22,
+            child: Image.asset('assets/images/logo.png', fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 14),

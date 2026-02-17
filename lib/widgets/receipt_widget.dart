@@ -51,7 +51,7 @@ class ReceiptWidget extends StatelessWidget {
         children: [
           // Header
           Text(
-            'SISTEM ANTREAN SATKER',
+            'SIASAT',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -174,7 +174,7 @@ class ReceiptWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '© ${DateTime.now().year} Sistem Antrean Satker',
+            '© ${DateTime.now().year} SIASAT',
             style: TextStyle(
               fontSize: 8,
               color: textColor.withValues(alpha: 0.5),

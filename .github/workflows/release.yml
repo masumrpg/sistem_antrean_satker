@@ -105,7 +105,7 @@ jobs:
 
       - name: Compress Windows installer
         run: |
-          Compress-Archive -Path dist\sistem_antrean_satker_setup.exe -DestinationPath windows.zip
+          Compress-Archive -Path dist\SIASAT_setup.exe -DestinationPath windows.zip
         shell: pwsh
 
       - name: Compress Portable Windows Build

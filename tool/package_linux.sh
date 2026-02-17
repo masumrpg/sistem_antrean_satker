@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Configuration
-APP_NAME="sistem-antrean-satker"
+APP_NAME="siasat"
 BINARY_NAME="sistem_antrean_satker"
 VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //; s/+.*//')
 MAINTAINER="ma-sum <masum@example.com>"
-DESCRIPTION="Sistem Antrean Satker application"
+DESCRIPTION="SIASAT - Sistem Antrean Satker"
+ICON_SOURCE="assets/images/logo.png"
 
 # Paths
 BUILD_DIR="build/linux/x64/release/bundle"
@@ -20,9 +21,13 @@ mkdir -p "$DEB_DIR/DEBIAN"
 mkdir -p "$DEB_DIR/usr/bin"
 mkdir -p "$DEB_DIR/usr/lib/$APP_NAME"
 mkdir -p "$DEB_DIR/usr/share/applications"
+mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 
 # Copy build files
 cp -r "$BUILD_DIR/"* "$DEB_DIR/usr/lib/$APP_NAME/"
+
+# Copy icon
+cp "$ICON_SOURCE" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
 
 # Create executable link
 cat <<EOF > "$DEB_DIR/usr/bin/$APP_NAME"
@@ -34,11 +39,12 @@ chmod +x "$DEB_DIR/usr/bin/$APP_NAME"
 # Create .desktop file
 cat <<EOF > "$DEB_DIR/usr/share/applications/$APP_NAME.desktop"
 [Desktop Entry]
-Name=Sistem Antrean Satker
+Name=SIASAT
 Exec=$APP_NAME
-Icon=$BINARY_NAME
+Icon=$APP_NAME
 Type=Application
 Categories=Utility;
+Terminal=false
 EOF
 
 # Create control file

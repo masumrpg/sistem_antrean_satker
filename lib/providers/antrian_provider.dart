@@ -253,7 +253,7 @@ class AntrianProvider extends ChangeNotifier {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.Text(
-                'SISTEM ANTREAN SATKER',
+                'SIASAT',
                 style: pw.TextStyle(
                   fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
@@ -329,7 +329,7 @@ class AntrianProvider extends ChangeNotifier {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                '© ${DateTime.now().year} Sistem Antrean Satker',
+                '© ${DateTime.now().year} SIASAT',
                 style: const pw.TextStyle(
                   fontSize: 6,
                   color: PdfColors.grey600,
