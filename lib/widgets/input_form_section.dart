@@ -47,6 +47,52 @@ class InputFormSection extends StatelessWidget {
                   TextPosition(offset: provider.nama.length),
                 ),
             ),
+            const SizedBox(height: 16),
+
+            // Judul
+            Text(
+              'Judul',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              onChanged: provider.setJudul,
+              decoration: const InputDecoration(
+                hintText: 'Masukkan judul/keperluan...',
+              ),
+              controller: TextEditingController(text: provider.judul)
+                ..selection = TextSelection.fromPosition(
+                  TextPosition(offset: provider.judul.length),
+                ),
+            ),
+            const SizedBox(height: 16),
+
+            // Nominal
+            Text(
+              'Nominal',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              onChanged: provider.setNominal,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Masukkan nominal (jika ada)...',
+                prefixText: 'Rp ',
+              ),
+              controller: TextEditingController(text: provider.nominal)
+                ..selection = TextSelection.fromPosition(
+                  TextPosition(offset: provider.nominal.length),
+                ),
+            ),
             const SizedBox(height: 24),
 
             // Sub Satker

@@ -17,16 +17,17 @@ class OutFormSection extends StatefulWidget {
 class _OutFormSectionState extends State<OutFormSection> {
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _fdController = TextEditingController();
+  final TextEditingController _spmController = TextEditingController();
   String _selectedSubSatker = '';
   bool _isLoading = false;
   Antrian? _foundAntrian;
   bool _isSearching = false;
-  DateTime _selectedSearchDate = DateTime.now();
 
   @override
   void dispose() {
     _namaController.dispose();
     _fdController.dispose();
+    _spmController.dispose();
     super.dispose();
   }
 
@@ -47,7 +48,6 @@ class _OutFormSectionState extends State<OutFormSection> {
     final fdNumber = int.tryParse(_fdController.text) ?? 0;
     final result = await provider.findAntrianByFD(
       fdNumber,
-      date: _selectedSearchDate,
     );
 
     setState(() {
@@ -67,10 +67,12 @@ class _OutFormSectionState extends State<OutFormSection> {
   Future<void> _handleSubmit() async {
     if (_foundAntrian == null) return;
 
-    if (_namaController.text.isEmpty || _selectedSubSatker.isEmpty) {
+    if (_namaController.text.isEmpty ||
+        _selectedSubSatker.isEmpty ||
+        _spmController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Mohon lengkapi Nama Pengambil dan Satker'),
+          content: Text('Mohon lengkapi Nama Pengambil, Satker, dan No SPM'),
         ),
       );
       return;
@@ -83,7 +85,8 @@ class _OutFormSectionState extends State<OutFormSection> {
       _foundAntrian!.nomorFD,
       _namaController.text,
       _selectedSubSatker,
-      date: _foundAntrian!.createdAt, // Ensure we process for the correct date
+      _spmController.text,
+      date: _foundAntrian!.createdAt,
     );
 
     setState(() => _isLoading = false);
@@ -101,6 +104,7 @@ class _OutFormSectionState extends State<OutFormSection> {
   void _resetForm() {
     _namaController.clear();
     _fdController.clear();
+    _spmController.clear();
     setState(() {
       _selectedSubSatker = '';
       _foundAntrian = null;
@@ -149,6 +153,8 @@ class _OutFormSectionState extends State<OutFormSection> {
                   _buildInfoRow('Diambil Oleh', antrian.takerName ?? '-'),
                   const Divider(height: 16),
                   _buildInfoRow('Satker Pengambil', antrian.takerSatker ?? '-'),
+                  const Divider(height: 16),
+                  _buildInfoRow('Nomor SPM', antrian.noSpm ?? '-'),
                 ],
               ),
             ),
@@ -248,72 +254,7 @@ class _OutFormSectionState extends State<OutFormSection> {
           const Divider(),
           const SizedBox(height: 24),
 
-          // Tanggal Penitipan Input
-          Text(
-            'TANGGAL PENITIPAN',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : AppTheme.textSecondary,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            onTap: _foundAntrian == null
-                ? () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedSearchDate,
-                      firstDate: DateTime(2025),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setState(() => _selectedSearchDate = picked);
-                    }
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.white24 : Colors.grey.shade300,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 20,
-                    color: AppTheme.primaryBlue,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    DateFormat(
-                      'dd MMMM yyyy',
-                      'id_ID',
-                    ).format(_selectedSearchDate),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_foundAntrian == null)
-                    Icon(
-                      Icons.arrow_drop_down_rounded,
-                      color: AppTheme.textSecondary,
-                    ),
-                ],
-              ),
-            ),
-          ),
+          // Tanggal Penitipan Removed as per requirements
           const SizedBox(height: 24),
 
           // Nomor FD Input & Search
@@ -425,6 +366,13 @@ class _OutFormSectionState extends State<OutFormSection> {
                   const SizedBox(height: 8),
                   _buildInfoRow('Satker Tujuan', _foundAntrian!.subSatker),
                   const SizedBox(height: 8),
+                  _buildInfoRow('Judul', _foundAntrian!.judul ?? '-'),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    'Nominal',
+                    'Rp ${_foundAntrian!.nominal ?? '-'}',
+                  ),
+                  const SizedBox(height: 8),
                   _buildInfoRow(
                     'Waktu Titip',
                     DateFormat(
@@ -458,6 +406,33 @@ class _OutFormSectionState extends State<OutFormSection> {
                 hint: 'Siapa yang mengambil berkas?',
                 isDark: isDark,
                 prefixIcon: Icons.person_outline_rounded,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Nomor SPM Input
+            Text(
+              'NOMOR SPM',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white70 : AppTheme.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _spmController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+              decoration: AppTheme.inputDecoration(
+                hint: 'Masukkan Nomor SPM',
+                isDark: isDark,
+                prefixIcon: Icons.receipt_long_rounded,
               ),
             ),
             const SizedBox(height: 24),

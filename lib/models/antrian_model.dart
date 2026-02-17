@@ -14,6 +14,9 @@ class Antrian {
   static const String statusOut = 'OUT'; // Pengambilan
 
   bool get isWaiting => status == statusIn;
+  final String? judul;
+  final String? nominal;
+  final String? noSpm;
   bool get isTaken => status == statusOut;
 
   Antrian({
@@ -27,6 +30,9 @@ class Antrian {
     this.outAt,
     this.takerName,
     this.takerSatker,
+    this.judul,
+    this.nominal,
+    this.noSpm,
   });
 
   Map<String, dynamic> toMap() {
@@ -40,6 +46,9 @@ class Antrian {
       'out_at': outAt?.toIso8601String(),
       'taker_name': takerName,
       'taker_satker': takerSatker,
+      'judul': judul,
+      'nominal': nominal,
+      'no_spm': noSpm,
     };
   }
 
@@ -57,6 +66,9 @@ class Antrian {
           : null,
       takerName: map['taker_name'] as String?,
       takerSatker: map['taker_satker'] as String?,
+      judul: map['judul'] as String?,
+      nominal: map['nominal'] as String?,
+      noSpm: map['no_spm'] as String?,
     );
   }
 }

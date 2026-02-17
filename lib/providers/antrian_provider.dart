@@ -13,9 +13,13 @@ class AntrianProvider extends ChangeNotifier {
   String _nama = '';
   String _selectedSubSatker = '';
   int _nomorFD = 1;
+  int _lastAutoFD = 0;
   int _durasi = AppConstants.defaultDurasi;
   bool _isAutoFD = true;
   bool _isDarkMode = false;
+  String _judul = '';
+  String _nominal = '';
+  String _noSpm = '';
 
   // Printer
   bool _isPrinterConnected = false;
@@ -32,6 +36,9 @@ class AntrianProvider extends ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   bool get isPrinterConnected => _isPrinterConnected;
   List<Antrian> get history => _history;
+  String get judul => _judul;
+  String get nominal => _nominal;
+  String get noSpm => _noSpm;
 
   String get nomorFDFormatted => _nomorFD.toString().padLeft(3, '0');
 
@@ -40,11 +47,26 @@ class AntrianProvider extends ChangeNotifier {
   // Initialize
   Future<void> initialize() async {
     final db = DatabaseHelper.instance;
-    final lastFD = await db.getLastFDNumber();
-    _nomorFD = lastFD + 1;
+    _lastAutoFD = await db.getLastFDNumber();
+    _nomorFD = _lastAutoFD + 1;
     _history = (await db.getAntrianToday()).map((e) => Antrian.fromMap(e)).toList();
     await _checkPrinter();
     notifyListeners();
+  }
+
+  Future<void> cetakStrukUlang(Antrian antrian) async {
+    final pdfDoc = await _generatePdf(antrian);
+
+    await Printing.layoutPdf(
+      onLayout: (_) => pdfDoc.save(),
+      name:
+          'Struk-${antrian.nomorFD.toString().padLeft(3, '0')}-${DateFormat('ddMMyyyy').format(antrian.createdAt)}-REPRINT',
+      format: PdfPageFormat(
+        72 * PdfPageFormat.mm,
+        200 * PdfPageFormat.mm,
+        marginAll: 5 * PdfPageFormat.mm,
+      ),
+    );
   }
 
   // Setters
@@ -55,6 +77,21 @@ class AntrianProvider extends ChangeNotifier {
 
   void setSubSatker(String value) {
     _selectedSubSatker = value;
+    notifyListeners();
+  }
+
+  void setJudul(String value) {
+    _judul = value;
+    notifyListeners();
+  }
+
+  void setNominal(String value) {
+    _nominal = value;
+    notifyListeners();
+  }
+
+  void setNoSpm(String value) {
+    _noSpm = value;
     notifyListeners();
   }
 
@@ -90,6 +127,9 @@ class AntrianProvider extends ChangeNotifier {
 
   void toggleAutoFD() {
     _isAutoFD = !_isAutoFD;
+    if (_isAutoFD) {
+      _nomorFD = _lastAutoFD + 1;
+    }
     notifyListeners();
   }
 
@@ -133,6 +173,15 @@ class AntrianProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<int> findNextAvailableFD(int start) async {
+    final db = DatabaseHelper.instance;
+    int current = start;
+    while (await db.isFDUsedToday(current)) {
+      current++;
+    }
+    return current;
+  }
+
   // Print & Save
   Future<void> cetakStruk(BuildContext context) async {
     if (!isFormValid) {
@@ -145,18 +194,55 @@ class AntrianProvider extends ChangeNotifier {
       return;
     }
 
+    final db = DatabaseHelper.instance;
+
+    // Check if FD is unique for today
+    bool isUsed = await db.isFDUsedToday(_nomorFD);
+    if (isUsed) {
+      if (_isAutoFD) {
+        // If auto, find next available
+        _nomorFD = await findNextAvailableFD(_nomorFD);
+        isUsed = false;
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Nomor FD $_nomorFD sudah ada untuk hari ini. Silahkan gunakan nomor lain.',
+              ),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'CARI SELANJUTNYA',
+                textColor: Colors.white,
+                onPressed: () async {
+                  _nomorFD = await findNextAvailableFD(_nomorFD);
+                  notifyListeners();
+                },
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final antrian = Antrian(
       nama: _nama,
       subSatker: _selectedSubSatker,
       nomorFD: _nomorFD,
       durasi: _durasi,
+      judul: _judul,
+      nominal: _nominal,
       createdAt: DateTime.now(),
     );
 
     // Save to database
-    final db = DatabaseHelper.instance;
     await db.insertAntrian(antrian.toMap());
-    await db.saveLastFDNumber(_nomorFD);
+
+    if (_isAutoFD) {
+      _lastAutoFD = _nomorFD;
+      await db.saveLastFDNumber(_lastAutoFD);
+    }
 
     // Generate & print PDF
     final pdfDoc = await _generatePdf(antrian);
@@ -175,13 +261,23 @@ class AntrianProvider extends ChangeNotifier {
     // Auto-increment after printing
     if (_isAutoFD) {
       _nomorFD++;
+      _lastAutoFD = _nomorFD - 1; // Update last auto FD
     }
 
     // Reset form
     _nama = '';
+    _judul = '';
+    _nominal = '';
     _selectedSubSatker = '';
     _durasi = AppConstants.defaultDurasi;
-    _history = (await db.getAntrianToday()).map((e) => Antrian.fromMap(e)).toList();
+
+    if (_isAutoFD) {
+      _nomorFD = _lastAutoFD + 1;
+    }
+
+    _history = (await db.getAntrianToday())
+        .map((e) => Antrian.fromMap(e))
+        .toList();
     notifyListeners();
   }
 
@@ -200,8 +296,9 @@ class AntrianProvider extends ChangeNotifier {
 
   Future<Antrian?> processOut(
     int nomorFD,
-    String nama,
-    String subSatker, {
+    String takerName,
+    String takerSatker,
+    String noSpm, {
     DateTime? date,
   }) async {
     final db = DatabaseHelper.instance;
@@ -213,13 +310,14 @@ class AntrianProvider extends ChangeNotifier {
       searchDate,
       'OUT',
       now,
-      nama, // Taker Name
-      subSatker, // Taker Satker
+      takerName,
+      takerSatker,
+      noSpm,
     );
 
     if (count > 0) {
       // Fetch the updated item
-      final updatedItemMap = await db.getAntrianByFD(nomorFD);
+      final updatedItemMap = await db.getAntrianByFD(nomorFD, date: searchDate);
       if (updatedItemMap != null) {
         final updatedItem = Antrian.fromMap(updatedItemMap);
 
@@ -305,6 +403,10 @@ class AntrianProvider extends ChangeNotifier {
               _buildPdfRow('No. FD', antrian.nomorFD.toString().padLeft(3, '0')),
               _buildPdfRow('Nama', antrian.nama),
               _buildPdfRow('Satker', antrian.subSatker),
+              if (antrian.judul != null && antrian.judul!.isNotEmpty)
+                _buildPdfRow('Judul', antrian.judul!),
+              if (antrian.nominal != null && antrian.nominal!.isNotEmpty)
+                _buildPdfRow('Nominal', 'Rp ${antrian.nominal}'),
               _buildPdfRow('Durasi', '${antrian.durasi} Hari'),
               _buildPdfRow(
                 'Tgl. Penitipan',
@@ -314,11 +416,33 @@ class AntrianProvider extends ChangeNotifier {
               pw.Divider(thickness: 0.5),
               pw.SizedBox(height: 8),
               _buildPdfRow(
-                'Tgl. Pengambilan',
+                'Tgl. Kembali',
                 dateFormat.format(
                   antrian.createdAt.add(Duration(days: antrian.durasi)),
                 ),
               ),
+              if (antrian.status == Antrian.statusOut) ...[
+                pw.SizedBox(height: 8),
+                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'INFORMASI PENGAMBILAN',
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                _buildPdfRow('Diambil Oleh', antrian.takerName ?? '-'),
+                _buildPdfRow('Dari Satker', antrian.takerSatker ?? '-'),
+                _buildPdfRow('No. SPM', antrian.noSpm ?? '-'),
+                _buildPdfRow(
+                  'Waktu Ambil',
+                  antrian.outAt != null
+                      ? '${dateFormat.format(antrian.outAt!)} ${timeFormat.format(antrian.outAt!)}'
+                      : '-',
+                ),
+              ],
               pw.SizedBox(height: 16),
               pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
               pw.SizedBox(height: 8),

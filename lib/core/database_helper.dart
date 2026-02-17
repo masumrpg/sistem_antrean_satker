@@ -26,7 +26,7 @@ class DatabaseHelper {
     return await databaseFactoryFfi.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       ),
@@ -45,7 +45,10 @@ class DatabaseHelper {
         status TEXT DEFAULT 'IN',
         out_at TEXT,
         taker_name TEXT,
-        taker_satker TEXT
+        taker_satker TEXT,
+        judul TEXT,
+        nominal TEXT,
+        no_spm TEXT
       )
     ''');
 
@@ -69,6 +72,11 @@ class DatabaseHelper {
       await db.execute("ALTER TABLE antrian ADD COLUMN taker_name TEXT");
       await db.execute("ALTER TABLE antrian ADD COLUMN taker_satker TEXT");
     }
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE antrian ADD COLUMN judul TEXT");
+      await db.execute("ALTER TABLE antrian ADD COLUMN nominal TEXT");
+      await db.execute("ALTER TABLE antrian ADD COLUMN no_spm TEXT");
+    }
   }
 
   // --- Antrian CRUD ---
@@ -88,11 +96,18 @@ class DatabaseHelper {
     DateTime? date,
   }) async {
     final db = await database;
-    final searchDate = date ?? DateTime.now();
+    String where = 'nomor_fd = ?';
+    List<dynamic> whereArgs = [nomorFD];
+
+    if (date != null) {
+      where += ' AND date(created_at) = date(?)';
+      whereArgs.add(date.toIso8601String());
+    }
+
     final results = await db.query(
       'antrian',
-      where: 'nomor_fd = ? AND date(created_at) = date(?)',
-      whereArgs: [nomorFD, searchDate.toIso8601String()],
+      where: where,
+      whereArgs: whereArgs,
       orderBy: 'created_at DESC',
       limit: 1,
     );
@@ -106,6 +121,7 @@ class DatabaseHelper {
     DateTime outAt,
     String takerName,
     String takerSatker,
+    String noSpm,
   ) async {
     final db = await database;
     final dateStr = recordDate.toIso8601String().substring(0, 10);
@@ -129,10 +145,23 @@ class DatabaseHelper {
         'out_at': outAt.toIso8601String(),
         'taker_name': takerName,
         'taker_satker': takerSatker,
+        'no_spm': noSpm,
       },
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<bool> isFDUsedToday(int nomorFD) async {
+    final db = await database;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final result = await db.query(
+      'antrian',
+      where: 'nomor_fd = ? AND created_at LIKE ?',
+      whereArgs: [nomorFD, '$today%'],
+      limit: 1,
+    );
+    return result.isNotEmpty;
   }
 
   Future<List<Map<String, dynamic>>> getAllAntrian() async {

@@ -22,6 +22,8 @@ class PreviewStruk extends StatelessWidget {
           : provider.selectedSubSatker,
       nomorFD: provider.nomorFD,
       durasi: provider.durasi,
+      judul: provider.judul,
+      nominal: provider.nominal,
       createdAt: DateTime.now(),
       status: 'IN',
     );

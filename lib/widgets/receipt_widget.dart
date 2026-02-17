@@ -126,6 +126,10 @@ class ReceiptWidget extends StatelessWidget {
           _buildRow('No. FD', antrian.nomorFD.toString().padLeft(3, '0'), textColor),
           _buildRow('Nama', antrian.nama, textColor),
           _buildRow('Satker', antrian.subSatker, textColor),
+          if (antrian.judul != null && antrian.judul!.isNotEmpty)
+            _buildRow('Judul', antrian.judul!, textColor),
+          if (antrian.nominal != null && antrian.nominal!.isNotEmpty)
+            _buildRow('Nominal', 'Rp ${antrian.nominal}', textColor),
           _buildRow('Durasi', '${antrian.durasi} Hari', textColor),
           _buildRow(
             'Waktu Masuk',
@@ -136,7 +140,6 @@ class ReceiptWidget extends StatelessWidget {
           Divider(color: textColor.withValues(alpha: 0.2), height: 16),
           const SizedBox(height: 8),
 
-          // Return Date Highlight
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -154,6 +157,36 @@ class ReceiptWidget extends StatelessWidget {
               ),
             ],
           ),
+
+          if (antrian.status == Antrian.statusOut) ...[
+            const SizedBox(height: 12),
+            CustomPaint(
+              painter: DashedLinePainter(
+                color: textColor.withValues(alpha: 0.5),
+              ),
+              size: const Size(double.infinity, 1),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'INFORMASI PENGAMBILAN',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildRow('Diambil Oleh', antrian.takerName ?? '-', textColor),
+            _buildRow('Dari Satker', antrian.takerSatker ?? '-', textColor),
+            _buildRow('No. SPM', antrian.noSpm ?? '-', textColor),
+            _buildRow(
+              'Waktu Ambil',
+              antrian.outAt != null
+                  ? '${dateFormat.format(antrian.outAt!)} ${timeFormat.format(antrian.outAt!)}'
+                  : '-',
+              textColor,
+            ),
+          ],
 
           const SizedBox(height: 24),
           CustomPaint(

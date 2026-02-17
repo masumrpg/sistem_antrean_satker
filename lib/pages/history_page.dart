@@ -141,6 +141,8 @@ class _HistoryPageState extends State<HistoryPage> {
                         const SizedBox(height: 4),
                         _buildInfoRow('Satker', antrian.takerSatker ?? '-'),
                         const SizedBox(height: 4),
+                        _buildInfoRow('No. SPM', antrian.noSpm ?? '-'),
+                        const SizedBox(height: 4),
                         _buildInfoRow(
                           'Waktu Ambil',
                           DateFormat(
@@ -151,28 +153,55 @@ class _HistoryPageState extends State<HistoryPage> {
                       ],
                     ),
                   ),
+                // Re-print Button always available in detail
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        context.read<AntrianProvider>().cetakStrukUlang(
+                          antrian,
+                        );
+                      },
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: const Text('CETAK ULANG'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryBlue,
+                        side: BorderSide(color: AppTheme.primaryBlue),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ),
         actions: antrian.status == 'IN'
             ? [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _showTakeDialog(antrian);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _showTakeDialog(antrian);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      child: const Text('PROSES PENGAMBILAN'),
                     ),
-                    child: const Text('PROSES PENGAMBILAN'),
                   ),
                 ),
               ]
@@ -263,6 +292,7 @@ class _HistoryPageState extends State<HistoryPage> {
   void _showTakeDialog(Antrian antrian) {
     final nameController = TextEditingController();
     final satkerController = TextEditingController(text: antrian.subSatker);
+    final spmController = TextEditingController();
     bool isLoading = false;
 
     showDialog(
@@ -305,6 +335,16 @@ class _HistoryPageState extends State<HistoryPage> {
                     if (val != null) satkerController.text = val;
                   },
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: spmController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor SPM',
+                    hintText: 'Masukkan Nomor SPM',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
               ],
             ),
             actions: [
@@ -322,6 +362,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           antrian.nomorFD,
                           nameController.text,
                           satkerController.text,
+                          spmController.text,
                         );
 
                         if (context.mounted) {
