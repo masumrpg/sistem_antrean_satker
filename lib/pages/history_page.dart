@@ -651,6 +651,7 @@ class _HistoryPageState extends State<HistoryPage> {
           child: InkWell(
             onTap: () => _showDetailDialog(antrian),
             borderRadius: BorderRadius.circular(12),
+            mouseCursor: SystemMouseCursors.click,
             hoverColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
             child: Padding(
               padding: const EdgeInsets.all(16),

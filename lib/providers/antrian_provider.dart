@@ -205,13 +205,17 @@ class AntrianProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<int> findNextAvailableFD(int start) async {
+  Future<int> findNextAvailableFD() async {
     final db = DatabaseHelper.instance;
-    int current = start;
+    int current = 1; // Always start from 1 to find smallest
     while (await db.isFDUsedToday(current)) {
       current++;
     }
     return current;
+  }
+
+  Future<bool> checkFDConflict(int fd) async {
+    return await DatabaseHelper.instance.isFDUsedToday(fd);
   }
 
   // Print & Save
@@ -233,27 +237,12 @@ class AntrianProvider extends ChangeNotifier {
     if (isUsed) {
       if (_isAutoFD) {
         // If auto, find next available
-        _nomorFD = await findNextAvailableFD(_nomorFD);
+        _nomorFD = await findNextAvailableFD();
         isUsed = false;
+        notifyListeners();
       } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Nomor FD $_nomorFD sudah ada untuk hari ini. Silahkan gunakan nomor lain.',
-              ),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'CARI SELANJUTNYA',
-                textColor: Colors.white,
-                onPressed: () async {
-                  _nomorFD = await findNextAvailableFD(_nomorFD);
-                  notifyListeners();
-                },
-              ),
-            ),
-          );
-        }
+        // For manual, we now handle this in the UI with a dialog
+        // But as a fallback/safety:
         return;
       }
     }

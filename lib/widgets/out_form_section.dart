@@ -466,6 +466,7 @@ class _OutFormSectionState extends State<OutFormSection> {
                   child: InkWell(
                     onTap: () => setState(() => _selectedSubSatker = sub.name),
                     borderRadius: BorderRadius.circular(12),
+                    mouseCursor: SystemMouseCursors.click,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(

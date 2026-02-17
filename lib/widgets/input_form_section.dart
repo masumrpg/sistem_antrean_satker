@@ -183,7 +183,7 @@ class InputFormSection extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: provider.isPrinterConnected
-                          ? () => provider.cetakStruk(context)
+                          ? () => _handlePrint(context, provider)
                           : null,
                       icon: const Icon(Icons.print_rounded, size: 20),
                       label: const Text('SIMPAN & CETAK NOMOR'),
@@ -233,6 +233,58 @@ class InputFormSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _handlePrint(
+    BuildContext context,
+    AntrianProvider provider,
+  ) async {
+    final hasConflict = await provider.checkFDConflict(provider.nomorFD);
+    if (hasConflict) {
+      if (context.mounted) {
+        _showConflictDialog(context, provider);
+      }
+    } else {
+      if (context.mounted) {
+        await provider.cetakStruk(context);
+      }
+    }
+  }
+
+  void _showConflictDialog(
+    BuildContext context,
+    AntrianProvider provider,
+  ) async {
+    final nextAvailable = await provider.findNextAvailableFD();
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nomor FD Sudah Terpakai'),
+        content: Text(
+          'Nomor FD ${provider.nomorFD} sudah ada untuk hari ini.\n'
+          'Saran nomor terkecil yang tersedia: $nextAvailable',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('BATAL'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              provider.setNomorFD(nextAvailable);
+              Navigator.pop(ctx);
+              provider.cetakStruk(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+            ),
+            child: Text('GUNAKAN NOMOR $nextAvailable'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -549,6 +601,7 @@ class _SubSatkerButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
+        mouseCursor: SystemMouseCursors.click,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(

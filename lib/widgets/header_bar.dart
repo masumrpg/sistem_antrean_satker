@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
 import '../core/app_theme.dart';
 import '../core/app_constants.dart';
 import '../providers/antrian_provider.dart';
@@ -98,52 +99,195 @@ class HeaderBar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-          // History Button
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HistoryPage()),
-              );
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+          Tooltip(
+            message: 'Riwayat Antrean',
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryPage()),
+                );
+              },
+              borderRadius: BorderRadius.circular(20),
+              mouseCursor: SystemMouseCursors.click,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.history_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
-              child: const Icon(
-                Icons.history_rounded,
-                color: Colors.white,
-                size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Export Button
+          Tooltip(
+            message: 'Ekspor Data (Backup)',
+            child: InkWell(
+              onTap: () => _handleExport(context),
+              borderRadius: BorderRadius.circular(20),
+              mouseCursor: SystemMouseCursors.click,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.upload_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Import Button
+          Tooltip(
+            message: 'Impor Data (Restore)',
+            child: InkWell(
+              onTap: () => _handleImport(context),
+              borderRadius: BorderRadius.circular(20),
+              mouseCursor: SystemMouseCursors.click,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.download_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 12),
           // Dark mode toggle
-          InkWell(
-            onTap: () => provider.toggleDarkMode(),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                provider.isDarkMode
-                    ? Icons.light_mode_rounded
-                    : Icons.dark_mode_rounded,
-                color: Colors.white,
-                size: 18,
+          Tooltip(
+            message: provider.isDarkMode ? 'Mode Terang' : 'Mode Gelap',
+            child: InkWell(
+              onTap: () => provider.toggleDarkMode(),
+              borderRadius: BorderRadius.circular(20),
+              mouseCursor: SystemMouseCursors.click,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  provider.isDarkMode
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleExport(BuildContext context) async {
+    final result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Simpan Database',
+      fileName:
+          'backup_siasat_${DateFormat('yyyyMMdd').format(DateTime.now())}.db',
+      type: FileType.any,
+    );
+
+    if (result != null) {
+      if (!context.mounted) return;
+      try {
+        await context.read<AntrianProvider>().exportData(result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Database berhasil diekspor'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal mengekspor data: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleImport(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Impor Database?'),
+        content: const Text(
+          'Tindakan ini akan mengganti seluruh data saat ini dengan data dari file yang dipilih.\n\nPASTIKAN ANDA SUDAH MELAKUKAN BACKUP TERLEBIH DAHULU.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('SAYA MENGERTI, LANJUTKAN'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    if (!context.mounted) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.single.path != null) {
+      if (!context.mounted) return;
+      try {
+        await context.read<AntrianProvider>().importData(
+          result.files.single.path!,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Database berhasil diimpor'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal mengimpor data: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }
