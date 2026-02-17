@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../core/app_constants.dart';
@@ -47,6 +48,31 @@ class InputFormSection extends StatelessWidget {
                   TextPosition(offset: provider.nama.length),
                 ),
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Checkbox(
+                    value: provider.keepNama,
+                    onChanged: (val) => provider.setKeepNama(val ?? false),
+                    activeColor: AppTheme.primaryBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Simpan Nama (Jangan reset setelah cetak)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // Judul
@@ -84,6 +110,10 @@ class InputFormSection extends StatelessWidget {
             TextField(
               onChanged: provider.setNominal,
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                ThousandsSeparatorInputFormatter(),
+              ],
               decoration: const InputDecoration(
                 hintText: 'Masukkan nominal (jika ada)...',
                 prefixText: 'Rp ',

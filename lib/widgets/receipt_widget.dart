@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/antrian_model.dart';
+import '../providers/antrian_provider.dart';
 import '../core/app_theme.dart';
 
 class ReceiptWidget extends StatelessWidget {
@@ -60,7 +61,7 @@ class ReceiptWidget extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           Text(
-            'Dashboard Pelayanan Terpadu',
+            'Sistem Antrean Satker',
             style: TextStyle(
               fontSize: 10,
               color: textColor.withValues(alpha: 0.7),
@@ -129,7 +130,11 @@ class ReceiptWidget extends StatelessWidget {
           if (antrian.judul != null && antrian.judul!.isNotEmpty)
             _buildRow('Judul', antrian.judul!, textColor),
           if (antrian.nominal != null && antrian.nominal!.isNotEmpty)
-            _buildRow('Nominal', 'Rp ${antrian.nominal}', textColor),
+            _buildRow(
+              'Nominal',
+              'Rp ${AntrianProvider.formatNominalValue(antrian.nominal)}',
+              textColor,
+            ),
           _buildRow('Durasi', '${antrian.durasi} Hari', textColor),
           _buildRow(
             'Waktu Masuk',

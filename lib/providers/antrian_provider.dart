@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -20,6 +21,7 @@ class AntrianProvider extends ChangeNotifier {
   String _judul = '';
   String _nominal = '';
   String _noSpm = '';
+  bool _keepNama = false;
 
   // Printer
   bool _isPrinterConnected = false;
@@ -39,6 +41,31 @@ class AntrianProvider extends ChangeNotifier {
   String get judul => _judul;
   String get nominal => _nominal;
   String get noSpm => _noSpm;
+  bool get keepNama => _keepNama;
+
+  String get formattedNominal {
+    if (_nominal.isEmpty) return '0';
+    try {
+      final cleanVal = _nominal.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanVal.isEmpty) return '0';
+      final value = int.parse(cleanVal);
+      return NumberFormat.decimalPattern('id_ID').format(value);
+    } catch (_) {
+      return _nominal;
+    }
+  }
+
+  static String formatNominalValue(String? val) {
+    if (val == null || val.isEmpty) return '0';
+    try {
+      final cleanVal = val.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanVal.isEmpty) return '0';
+      final value = int.parse(cleanVal);
+      return NumberFormat.decimalPattern('id_ID').format(value);
+    } catch (_) {
+      return val;
+    }
+  }
 
   String get nomorFDFormatted => _nomorFD.toString().padLeft(3, '0');
 
@@ -92,6 +119,11 @@ class AntrianProvider extends ChangeNotifier {
 
   void setNoSpm(String value) {
     _noSpm = value;
+    notifyListeners();
+  }
+
+  void setKeepNama(bool value) {
+    _keepNama = value;
     notifyListeners();
   }
 
@@ -265,7 +297,9 @@ class AntrianProvider extends ChangeNotifier {
     }
 
     // Reset form
-    _nama = '';
+    if (!_keepNama) {
+      _nama = '';
+    }
     _judul = '';
     _nominal = '';
     _selectedSubSatker = '';
@@ -358,7 +392,7 @@ class AntrianProvider extends ChangeNotifier {
                 ),
               ),
               pw.Text(
-                'Dashboard Pelayanan Terpadu',
+                'Sistem Antrean Satker',
                 style: const pw.TextStyle(fontSize: 7),
               ),
               pw.SizedBox(height: 8),
@@ -406,7 +440,10 @@ class AntrianProvider extends ChangeNotifier {
               if (antrian.judul != null && antrian.judul!.isNotEmpty)
                 _buildPdfRow('Judul', antrian.judul!),
               if (antrian.nominal != null && antrian.nominal!.isNotEmpty)
-                _buildPdfRow('Nominal', 'Rp ${antrian.nominal}'),
+                _buildPdfRow(
+                  'Nominal',
+                  'Rp ${formatNominalValue(antrian.nominal)}',
+                ),
               _buildPdfRow('Durasi', '${antrian.durasi} Hari'),
               _buildPdfRow(
                 'Tgl. Penitipan',
@@ -494,5 +531,32 @@ class AntrianProvider extends ChangeNotifier {
     _history = [];
     _nomorFD = AppConstants.defaultFDStart;
     notifyListeners();
+  }
+}
+
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    final String cleanText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final int value = int.parse(cleanText);
+    final String formattedText = NumberFormat.decimalPattern(
+      'id_ID',
+    ).format(value);
+
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
   }
 }

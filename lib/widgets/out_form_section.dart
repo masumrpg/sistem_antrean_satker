@@ -370,7 +370,7 @@ class _OutFormSectionState extends State<OutFormSection> {
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     'Nominal',
-                    'Rp ${_foundAntrian!.nominal ?? '-'}',
+                    'Rp ${AntrianProvider.formatNominalValue(_foundAntrian!.nominal)}',
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(
