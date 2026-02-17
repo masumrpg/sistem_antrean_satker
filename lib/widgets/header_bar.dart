@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import '../core/app_theme.dart';
 import '../core/app_constants.dart';
 import '../providers/antrian_provider.dart';
-import 'package:provider/provider.dart';
 
 import '../pages/history_page.dart';
 
@@ -202,33 +203,35 @@ class HeaderBar extends StatelessWidget {
   }
 
   Future<void> _handleExport(BuildContext context) async {
-    final result = await FilePicker.platform.saveFile(
-      dialogTitle: 'Simpan Database',
-      fileName:
-          'backup_siasat_${DateFormat('yyyyMMdd').format(DateTime.now())}.db',
-      type: FileType.any,
+    final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Pilih Folder Simpan Backup',
     );
 
-    if (result != null) {
-      if (!context.mounted) return;
-      try {
-        await context.read<AntrianProvider>().exportData(result);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Database berhasil diekspor'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Gagal mengekspor data: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+    if (directoryPath != null) {
+      final fileName =
+          'backup_siasat_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.db';
+      final fullPath = p.join(directoryPath, fileName);
+
+      if (context.mounted) {
+        try {
+          await context.read<AntrianProvider>().exportData(fullPath);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Berhasil diekspor ke: $fileName'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Gagal ekspor: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     }

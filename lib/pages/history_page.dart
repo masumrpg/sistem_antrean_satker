@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import '../core/app_theme.dart';
 import '../core/app_constants.dart';
 import '../core/database_helper.dart';
@@ -63,21 +64,22 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _handleExport() async {
-    final result = await FilePicker.platform.saveFile(
-      dialogTitle: 'Simpan Database',
-      fileName:
-          'backup_siasat_${DateFormat('yyyyMMdd').format(DateTime.now())}.db',
-      type: FileType.any,
+    final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Pilih Folder Simpan Backup',
     );
 
-    if (result != null) {
+    if (directoryPath != null) {
+      final fileName =
+          'backup_siasat_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.db';
+      final fullPath = p.join(directoryPath, fileName);
+
       if (mounted) {
         try {
-          await context.read<AntrianProvider>().exportData(result);
+          await context.read<AntrianProvider>().exportData(fullPath);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Database berhasil diekspor'),
+              SnackBar(
+                content: Text('Berhasil diekspor ke: $fileName'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -86,7 +88,7 @@ class _HistoryPageState extends State<HistoryPage> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Gagal mengekspor data: $e'),
+                content: Text('Gagal ekspor: $e'),
                 backgroundColor: Colors.red,
               ),
             );
