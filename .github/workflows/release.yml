@@ -77,6 +77,7 @@ jobs:
           cache: true
 
       - name: Enable desktop platform
+        shell: bash
         run: |
           if [ "${{ matrix.platform }}" == "windows" ]; then
             flutter config --enable-windows-desktop
@@ -91,9 +92,11 @@ jobs:
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 
       - name: Install dependencies
+        shell: bash
         run: flutter pub get
 
       - name: Build executable
+        shell: bash
         run: |
           if [ "${{ matrix.platform }}" == "windows" ]; then
             flutter build windows --release
