@@ -29,6 +29,10 @@ class AntrianProvider extends ChangeNotifier {
   // History
   List<Antrian> _history = [];
 
+  // Init status
+  bool _isInitialized = false;
+  String? _initError;
+
   // Getters
   String get nama => _nama;
   String get selectedSubSatker => _selectedSubSatker;
@@ -42,6 +46,8 @@ class AntrianProvider extends ChangeNotifier {
   String get nominal => _nominal;
   String get noSpm => _noSpm;
   bool get keepNama => _keepNama;
+  bool get isInitialized => _isInitialized;
+  String? get initError => _initError;
 
   String get formattedNominal {
     if (_nominal.isEmpty) return '0';
@@ -73,12 +79,34 @@ class AntrianProvider extends ChangeNotifier {
 
   // Initialize
   Future<void> initialize() async {
-    final db = DatabaseHelper.instance;
-    _lastAutoFD = await db.getLastFDNumber();
-    _nomorFD = _lastAutoFD + 1;
-    _history = (await db.getAntrianToday()).map((e) => Antrian.fromMap(e)).toList();
-    await _checkPrinter();
-    notifyListeners();
+    if (_isInitialized) return;
+
+    try {
+      final db = DatabaseHelper.instance;
+
+      // Wrap heavy calls in timeout to prevent infinite hang
+      _lastAutoFD = await db.getLastFDNumber().timeout(
+        const Duration(seconds: 5),
+      );
+      _nomorFD = _lastAutoFD + 1;
+
+      final historyData = await db.getAntrianToday().timeout(
+        const Duration(seconds: 5),
+      );
+      _history = historyData.map((e) => Antrian.fromMap(e)).toList();
+
+      await _checkPrinter().timeout(const Duration(seconds: 3));
+
+      _isInitialized = true;
+      _initError = null;
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+      _initError = e.toString();
+      // Even if it fails, we mark it as "attempted" so the splash doesn't hang forever
+      _isInitialized = true;
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<void> cetakStrukUlang(Antrian antrian) async {

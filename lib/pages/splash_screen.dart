@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../core/app_constants.dart';
+import '../providers/antrian_provider.dart';
 import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,13 +39,26 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _navigateToHome() async {
-    // Wait for at least 3 seconds to show the splash screen
-    await Future.delayed(const Duration(seconds: 3));
+    // 1. Wait for animation and minimum branding time
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // 2. Wait for initialization if not ready
+    final provider = context.read<AntrianProvider>();
+    if (!provider.isInitialized) {
+      // Periodic check or use a listener/completer
+      // For simplicity, we just check isInitialized which is updated via notifyListeners
+      while (mounted && !context.read<AntrianProvider>().isInitialized) {
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const AntreanPage(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const AntreanPage(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

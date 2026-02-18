@@ -36,14 +36,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AntrianProvider()..initialize(),
-      child: Consumer<AntrianProvider>(
-        builder: (context, provider, _) {
+      child: Selector<AntrianProvider, bool>(
+        selector: (_, provider) => provider.isDarkMode,
+        builder: (context, isDarkMode, _) {
           return MaterialApp(
             title: AppConstants.appTitle,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme(),
             darkTheme: AppTheme.darkTheme(),
-            themeMode: provider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: const SplashScreen(),
           );
         },
