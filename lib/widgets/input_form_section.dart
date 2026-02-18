@@ -182,9 +182,7 @@ class InputFormSection extends StatelessWidget {
                   child: SizedBox(
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: provider.isPrinterConnected
-                          ? () => _handlePrint(context, provider)
-                          : null,
+                      onPressed: () => _handlePrint(context, provider),
                       icon: const Icon(Icons.print_rounded, size: 20),
                       label: const Text('SIMPAN & CETAK NOMOR'),
                       style: ElevatedButton.styleFrom(
@@ -204,6 +202,28 @@ class InputFormSection extends StatelessWidget {
                 ),
               ],
             ),
+            if (!provider.isPrinterConnected)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Printer tidak terdeteksi, namun Anda tetap bisa mencoba mencetak (System Print).',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.orange.shade700,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

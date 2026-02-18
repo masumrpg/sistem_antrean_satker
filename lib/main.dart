@@ -65,6 +65,47 @@ class AntreanPage extends StatelessWidget {
       child: Scaffold(
         body: Column(
           children: [
+            // Error Banner
+            Consumer<AntrianProvider>(
+              builder: (context, provider, child) {
+                if (provider.initError != null) {
+                  return Container(
+                    width: double.infinity,
+                    color: Colors.red.shade800,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Gagal Inisialisasi: ${provider.initError}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => provider.initialize(),
+                          child: const Text(
+                            'COBA LAGI',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             // Header
             const HeaderBar(),
             // Tab Bar

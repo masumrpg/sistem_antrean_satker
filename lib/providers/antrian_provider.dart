@@ -258,78 +258,90 @@ class AntrianProvider extends ChangeNotifier {
       return;
     }
 
-    final db = DatabaseHelper.instance;
+    try {
+      final db = DatabaseHelper.instance;
 
-    // Check if FD is unique for today
-    bool isUsed = await db.isFDUsedToday(_nomorFD);
-    if (isUsed) {
+      // Check if FD is unique for today
+      bool isUsed = await db.isFDUsedToday(_nomorFD);
+      if (isUsed) {
+        if (_isAutoFD) {
+          // If auto, find next available
+          _nomorFD = await findNextAvailableFD();
+          isUsed = false;
+          notifyListeners();
+        } else {
+          // Handled in UI, but safety exit
+          return;
+        }
+      }
+
+      final antrian = Antrian(
+        nama: _nama,
+        subSatker: _selectedSubSatker,
+        nomorFD: _nomorFD,
+        durasi: _durasi,
+        judul: _judul,
+        nominal: _nominal,
+        createdAt: DateTime.now(),
+      );
+
+      // Save to database
+      await db.insertAntrian(antrian.toMap());
+
       if (_isAutoFD) {
-        // If auto, find next available
-        _nomorFD = await findNextAvailableFD();
-        isUsed = false;
-        notifyListeners();
-      } else {
-        // For manual, we now handle this in the UI with a dialog
-        // But as a fallback/safety:
-        return;
+        _lastAutoFD = _nomorFD;
+        await db.saveLastFDNumber(_lastAutoFD);
+      }
+
+      // Generate & print PDF
+      final pdfDoc = await _generatePdf(antrian);
+
+      await Printing.layoutPdf(
+        onLayout: (_) => pdfDoc.save(),
+        name:
+            'Struk-${antrian.nomorFD.toString().padLeft(3, '0')}-${DateFormat('ddMMyyyy').format(antrian.createdAt)}-IN',
+        format: PdfPageFormat(
+          72 * PdfPageFormat.mm,
+          200 * PdfPageFormat.mm,
+          marginAll: 5 * PdfPageFormat.mm,
+        ),
+      );
+
+      // Auto-increment after printing
+      if (_isAutoFD) {
+        _nomorFD++;
+        _lastAutoFD = _nomorFD - 1;
+      }
+
+      // Reset form
+      if (!_keepNama) {
+        _nama = '';
+      }
+      _judul = '';
+      _nominal = '';
+      _selectedSubSatker = '';
+      _durasi = AppConstants.defaultDurasi;
+
+      if (_isAutoFD) {
+        _nomorFD = _lastAutoFD + 1;
+      }
+
+      _history = (await db.getAntrianToday())
+          .map((e) => Antrian.fromMap(e))
+          .toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error in cetakStruk: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal Simpan & Cetak: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
-
-    final antrian = Antrian(
-      nama: _nama,
-      subSatker: _selectedSubSatker,
-      nomorFD: _nomorFD,
-      durasi: _durasi,
-      judul: _judul,
-      nominal: _nominal,
-      createdAt: DateTime.now(),
-    );
-
-    // Save to database
-    await db.insertAntrian(antrian.toMap());
-
-    if (_isAutoFD) {
-      _lastAutoFD = _nomorFD;
-      await db.saveLastFDNumber(_lastAutoFD);
-    }
-
-    // Generate & print PDF
-    final pdfDoc = await _generatePdf(antrian);
-
-    await Printing.layoutPdf(
-      onLayout: (_) => pdfDoc.save(),
-      name:
-          'Struk-${antrian.nomorFD.toString().padLeft(3, '0')}-${DateFormat('ddMMyyyy').format(antrian.createdAt)}-IN',
-      format: PdfPageFormat(
-        72 * PdfPageFormat.mm,
-        200 * PdfPageFormat.mm,
-        marginAll: 5 * PdfPageFormat.mm,
-      ),
-    );
-
-    // Auto-increment after printing
-    if (_isAutoFD) {
-      _nomorFD++;
-      _lastAutoFD = _nomorFD - 1; // Update last auto FD
-    }
-
-    // Reset form
-    if (!_keepNama) {
-      _nama = '';
-    }
-    _judul = '';
-    _nominal = '';
-    _selectedSubSatker = '';
-    _durasi = AppConstants.defaultDurasi;
-
-    if (_isAutoFD) {
-      _nomorFD = _lastAutoFD + 1;
-    }
-
-    _history = (await db.getAntrianToday())
-        .map((e) => Antrian.fromMap(e))
-        .toList();
-    notifyListeners();
   }
 
   Future<Antrian?> findAntrianByFD(int fd, {DateTime? date}) async {
@@ -352,35 +364,43 @@ class AntrianProvider extends ChangeNotifier {
     String noSpm, {
     DateTime? date,
   }) async {
-    final db = DatabaseHelper.instance;
-    final now = DateTime.now();
-    final searchDate = date ?? now;
+    try {
+      final db = DatabaseHelper.instance;
+      final now = DateTime.now();
+      final searchDate = date ?? now;
 
-    final count = await db.updateAntrianStatus(
-      nomorFD,
-      searchDate,
-      'OUT',
-      now,
-      takerName,
-      takerSatker,
-      noSpm,
-    );
+      final count = await db.updateAntrianStatus(
+        nomorFD,
+        searchDate,
+        'OUT',
+        now,
+        takerName,
+        takerSatker,
+        noSpm,
+      );
 
-    if (count > 0) {
-      // Fetch the updated item
-      final updatedItemMap = await db.getAntrianByFD(nomorFD, date: searchDate);
-      if (updatedItemMap != null) {
-        final updatedItem = Antrian.fromMap(updatedItemMap);
+      if (count > 0) {
+        // Fetch the updated item
+        final updatedItemMap = await db.getAntrianByFD(
+          nomorFD,
+          date: searchDate,
+        );
+        if (updatedItemMap != null) {
+          final updatedItem = Antrian.fromMap(updatedItemMap);
 
-        // Refresh history
-        _history = (await db.getAntrianToday())
-            .map((e) => Antrian.fromMap(e))
-            .toList();
-        notifyListeners();
-        return updatedItem;
+          // Refresh history
+          _history = (await db.getAntrianToday())
+              .map((e) => Antrian.fromMap(e))
+              .toList();
+          notifyListeners();
+          return updatedItem;
+        }
       }
+      return null;
+    } catch (e) {
+      debugPrint('Error in processOut: $e');
+      rethrow;
     }
-    return null;
   }
 
   Future<pw.Document> _generatePdf(Antrian antrian) async {
