@@ -284,8 +284,8 @@ class InputFormSection extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Nomor FD Sudah Terpakai'),
         content: Text(
-          'Nomor FD ${provider.nomorFD} sudah ada untuk hari ini.\n'
-          'Saran nomor terkecil yang tersedia: $nextAvailable',
+          'Nomor FD ${provider.nomorFDFormatted} sudah ada untuk hari ini.\n'
+          'Saran nomor terkecil yang tersedia: ${nextAvailable.toString().padLeft(3, "0")}',
         ),
         actions: [
           TextButton(
@@ -301,7 +301,9 @@ class InputFormSection extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
             ),
-            child: Text('GUNAKAN NOMOR $nextAvailable'),
+            child: Text(
+              'GUNAKAN NOMOR ${nextAvailable.toString().padLeft(3, "0")}',
+            ),
           ),
         ],
       ),

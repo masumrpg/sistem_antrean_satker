@@ -263,7 +263,8 @@ class HeaderBar extends StatelessWidget {
     if (!context.mounted) return;
 
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: FileType.custom,
+      allowedExtensions: ['db'],
       allowMultiple: false,
     );
 

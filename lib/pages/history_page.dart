@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -21,11 +22,24 @@ class _HistoryPageState extends State<HistoryPage> {
   List<Antrian> _allHistory = [];
   bool _isLoading = true;
   DateTime? _selectedDate;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
+  bool _isGridView = false;
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadHistory() async {
@@ -125,7 +139,8 @@ class _HistoryPageState extends State<HistoryPage> {
 
     // 2. File Picking
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: FileType.custom,
+      allowedExtensions: ['db'],
       allowMultiple: false,
     );
 
@@ -436,6 +451,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 TextField(
                   controller: spmController,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
                     labelText: 'Nomor SPM',
                     hintText: 'Masukkan Nomor SPM',
@@ -460,6 +476,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           nameController.text,
                           satkerController.text,
                           spmController.text,
+                          date: antrian.createdAt,
                         );
 
                         if (context.mounted) {
@@ -528,19 +545,36 @@ class _HistoryPageState extends State<HistoryPage> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            children: [
-              const Text('Riwayat Antrean'),
-              if (_selectedDate != null)
-                Text(
-                  DateFormat('d MMM yyyy', 'id_ID').format(_selectedDate!),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.normal,
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Cari Nama, Judul, atau Nominal...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : AppTheme.textPrimary,
+                    fontSize: 16,
+                  ),
+                )
+              : Column(
+                  children: [
+                    const Text('Riwayat Antrean'),
+                    if (_selectedDate != null)
+                      Text(
+                        DateFormat(
+                          'd MMM yyyy',
+                          'id_ID',
+                        ).format(_selectedDate!),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
           centerTitle: true,
           backgroundColor: isDark ? AppTheme.cardDark : Colors.white,
           foregroundColor: isDark ? Colors.white : AppTheme.textPrimary,
@@ -557,7 +591,34 @@ class _HistoryPageState extends State<HistoryPage> {
               Tab(text: 'Sudah Diambil'),
             ],
           ),
+          leading: _isSearching
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = false;
+                      _searchController.clear();
+                    });
+                  },
+                )
+              : null,
           actions: [
+            if (!_isSearching) ...[
+              IconButton(
+                onPressed: () => setState(() => _isSearching = true),
+                icon: const Icon(Icons.search_rounded),
+                tooltip: 'Cari',
+              ),
+              IconButton(
+                onPressed: () => setState(() => _isGridView = !_isGridView),
+                icon: Icon(
+                  _isGridView
+                      ? Icons.view_list_rounded
+                      : Icons.grid_view_rounded,
+                ),
+                tooltip: _isGridView ? 'Tampilan List' : 'Tampilan Grid',
+              ),
+            ],
             if (_selectedDate != null)
               IconButton(
                 onPressed: _clearFilter,
@@ -596,12 +657,12 @@ class _HistoryPageState extends State<HistoryPage> {
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
                 children: [
-                  _buildHistoryList(_allHistory, isDark),
-                  _buildHistoryList(
+                  _buildContent(_allHistory, isDark),
+                  _buildContent(
                     _allHistory.where((e) => e.status == 'IN').toList(),
                     isDark,
                   ),
-                  _buildHistoryList(
+                  _buildContent(
                     _allHistory.where((e) => e.status == 'OUT').toList(),
                     isDark,
                   ),
@@ -611,20 +672,39 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Widget _buildHistoryList(List<Antrian> history, bool isDark) {
-    if (history.isEmpty) {
+  Widget _buildContent(List<Antrian> history, bool isDark) {
+    // Apply Search Filter locally
+    final filteredHistory = history.where((antrian) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase();
+      final matchesNama = antrian.nama.toLowerCase().contains(query);
+      final matchesJudul =
+          antrian.judul?.toLowerCase().contains(query) ?? false;
+      final matchesNominal =
+          antrian.nominal?.toLowerCase().contains(query) ?? false;
+      final matchesNumber =
+          antrian.nomorFD.toString().contains(query) ||
+          antrian.nomorFD.toString().padLeft(3, '0').contains(query);
+      return matchesNama || matchesJudul || matchesNominal || matchesNumber;
+    }).toList();
+
+    if (filteredHistory.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.history_toggle_off_rounded,
+              _searchQuery.isEmpty
+                  ? Icons.history_toggle_off_rounded
+                  : Icons.search_off_rounded,
               size: 64,
               color: Colors.grey.shade400,
             ),
             const SizedBox(height: 16),
             Text(
-              'Tidak ada data antrean',
+              _searchQuery.isEmpty
+                  ? 'Tidak ada data antrean'
+                  : 'Pencarian tidak ditemukan',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade500,
@@ -636,48 +716,80 @@ class _HistoryPageState extends State<HistoryPage> {
       );
     }
 
+    if (_isGridView) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 350,
+          mainAxisExtent: 220,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: filteredHistory.length,
+        itemBuilder: (context, index) {
+          final antrian = filteredHistory[index];
+          return _buildHistoryCard(antrian, isDark, isGrid: true);
+        },
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: history.length,
+      itemCount: filteredHistory.length,
       itemBuilder: (context, index) {
-        final antrian = history[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isDark ? const Color(0xFF2D3A55) : AppTheme.borderColor,
-            ),
-          ),
-          child: InkWell(
-            onTap: () => _showDetailDialog(antrian),
-            borderRadius: BorderRadius.circular(12),
-            mouseCursor: SystemMouseCursors.click,
-            hoverColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+        final antrian = filteredHistory[index];
+        return _buildHistoryCard(antrian, isDark, isGrid: false);
+      },
+    );
+  }
+
+  Widget _buildHistoryCard(
+    Antrian antrian,
+    bool isDark, {
+    required bool isGrid,
+  }) {
+    final borderColor = isDark ? const Color(0xFF2D3A55) : AppTheme.borderColor;
+
+    return Card(
+      margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      child: InkWell(
+        onTap: () => _showDetailDialog(antrian),
+        borderRadius: BorderRadius.circular(16),
+        mouseCursor: SystemMouseCursors.click,
+        hoverColor: AppTheme.primaryBlue.withValues(alpha: 0.05),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Queue Number Badge
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
                       child: Text(
-                        antrian.nomorFD.toString(),
+                        antrian.nomorFD.toString().padLeft(3, '0'),
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
                           color: AppTheme.primaryBlue,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,146 +797,211 @@ class _HistoryPageState extends State<HistoryPage> {
                         Text(
                           antrian.nama,
                           style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                             color: isDark ? Colors.white : AppTheme.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             Icon(
                               Icons.business_rounded,
-                              size: 14,
-                              color: isDark
-                                  ? Colors.white54
-                                  : AppTheme.textSecondary,
+                              size: 12,
+                              color: Colors.grey.shade500,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              antrian.subSatker,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? Colors.white70
-                                    : AppTheme.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Icon(
-                              Icons.access_time_rounded,
-                              size: 14,
-                              color: isDark
-                                  ? Colors.white54
-                                  : AppTheme.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${antrian.durasi} Hari',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? Colors.white70
-                                    : AppTheme.textSecondary,
+                            Expanded(
+                              child: Text(
+                                antrian.subSatker,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        if (antrian.status == 'OUT' &&
-                            antrian.takerName != null) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: Colors.green.withValues(alpha: 0.1),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.person_pin_rounded,
-                                  size: 14,
-                                  color: Colors.green.shade700,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    'DIAMBIL OLEH: ${antrian.takerName} (${antrian.takerSatker ?? "-"})',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green.shade800,
-                                      letterSpacing: 0.5,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  // Status Badge
+                  _buildStatusBadge(antrian.status),
+                ],
+              ),
+              if (!isGrid) const SizedBox(height: 12) else const Spacer(),
+
+              // Middle Info (Judul & Nominal)
+              if ((antrian.judul != null && antrian.judul!.isNotEmpty) ||
+                  (antrian.nominal != null && antrian.nominal!.isNotEmpty))
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black12 : Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
                     children: [
+                      if (antrian.judul != null && antrian.judul!.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.description_outlined,
+                              size: 14,
+                              color: AppTheme.primaryBlue,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                antrian.judul!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppTheme.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (antrian.judul != null &&
+                          antrian.judul!.isNotEmpty &&
+                          antrian.nominal != null &&
+                          antrian.nominal!.isNotEmpty)
+                        const SizedBox(height: 6),
+                      if (antrian.nominal != null &&
+                          antrian.nominal!.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.payments_outlined,
+                              size: 14,
+                              color: Colors.green.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Rp ${AntrianProvider.formatNominalValue(antrian.nominal)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+
+              if (!isGrid)
+                const SizedBox(height: 12)
+              else
+                const SizedBox(height: 8),
+
+              // Bottom Info (Date & Duration)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        DateFormat(
-                          'dd MMM, HH:mm',
-                          'id_ID',
-                        ).format(antrian.createdAt),
+                        DateFormat('dd/MM, HH:mm').format(antrian.createdAt),
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark
-                              ? Colors.white54
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: antrian.status == 'OUT'
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: antrian.status == 'OUT'
-                                ? Colors.green.withValues(alpha: 0.5)
-                                : Colors.orange.withValues(alpha: 0.5),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          antrian.status == 'OUT' ? 'DIAMBIL' : 'DITITIPKAN',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: antrian.status == 'OUT'
-                                ? Colors.green
-                                : Colors.orange,
-                          ),
+                          color: Colors.grey.shade500,
                         ),
                       ),
                     ],
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${antrian.durasi} Hari',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
+
+              // Taker Info for OUT status
+              if (antrian.status == 'OUT' && antrian.takerName != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 12,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Diambil oleh: ${antrian.takerName}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final isOut = status == 'OUT';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isOut ? Colors.green.shade50 : Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isOut ? Colors.green.shade200 : Colors.orange.shade200,
+          width: 0.5,
+        ),
+      ),
+      child: Text(
+        isOut ? 'Sudah Diambil' : 'Belum Diambil',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          color: isOut ? Colors.green.shade800 : Colors.orange.shade800,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
