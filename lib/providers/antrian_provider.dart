@@ -547,14 +547,20 @@ class AntrianProvider extends ChangeNotifier {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text('$label:', style: const pw.TextStyle(fontSize: 8)),
-          pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+          pw.SizedBox(
+            width: 50,
+            child: pw.Text('$label:', style: const pw.TextStyle(fontSize: 8)),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              ),
+              textAlign: pw.TextAlign.right,
             ),
           ),
         ],

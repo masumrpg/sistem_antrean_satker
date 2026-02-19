@@ -614,7 +614,7 @@ class _HistoryPageState extends State<HistoryPage> {
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 350,
-          mainAxisExtent: 220,
+          mainAxisExtent: 240, // Slightly increased to accommodate more lines
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
@@ -691,10 +691,10 @@ class _HistoryPageState extends State<HistoryPage> {
                           antrian.nama,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : AppTheme.textPrimary,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
@@ -759,7 +759,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       ? Colors.white70
                                       : AppTheme.textPrimary,
                                 ),
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
