@@ -52,7 +52,7 @@ class ReceiptWidget extends StatelessWidget {
         children: [
           // Header
           Text(
-            'SIASAT',
+            'E-Ticket',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -61,7 +61,7 @@ class ReceiptWidget extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           Text(
-            'Sistem Antrean Satker',
+            'Pelayanan Terpadu',
             style: TextStyle(
               fontSize: 10,
               color: textColor.withValues(alpha: 0.7),
@@ -145,23 +145,7 @@ class ReceiptWidget extends StatelessWidget {
           Divider(color: textColor.withValues(alpha: 0.2), height: 16),
           const SizedBox(height: 8),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tanggal Kembali:',
-                style: TextStyle(fontSize: 11, color: textColor),
-              ),
-              Text(
-                returnDateStr,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
+          _buildRow('Tanggal Kembali', returnDateStr, textColor),
 
           if (antrian.status == Antrian.statusOut) ...[
             const SizedBox(height: 12),

@@ -135,21 +135,31 @@ class InputFormSection extends StatelessWidget {
             _buildSubSatkerGrid(context, provider, isDark),
             const SizedBox(height: 24),
 
-            // Nomor FD & Durasi Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Nomor FD
-                Expanded(
-                  child: _buildNomorFDSection(context, provider, isDark),
-                ),
-                const SizedBox(width: 20),
-                // Durasi
-                Expanded(
-                  child: _buildDurasiSection(context, provider, isDark),
-                ),
-              ],
-            ),
+            // Nomor FD & Durasi Row/Column
+            if (provider.nomorFD >= 1000)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildNomorFDSection(context, provider, isDark),
+                  const SizedBox(height: 20),
+                  _buildDurasiSection(context, provider, isDark),
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Nomor FD
+                  Expanded(
+                    child: _buildNomorFDSection(context, provider, isDark),
+                  ),
+                  const SizedBox(width: 20),
+                  // Durasi
+                  Expanded(
+                    child: _buildDurasiSection(context, provider, isDark),
+                  ),
+                ],
+              ),
             const SizedBox(height: 28),
 
             // Cetak & Reset Buttons
@@ -406,51 +416,51 @@ class InputFormSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryBlue,
+                        color: isDark ? Colors.white : AppTheme.textPrimary,
                       ),
                     )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Minus button
-                        _SmallStepperButton(
-                          icon: Icons.remove,
-                          onTap: () =>
-                              provider.setNomorFD(provider.nomorFD - 1),
-                          enabled: provider.nomorFD > 1,
-                        ),
-                        const SizedBox(width: 6),
-                        // Editable number
-                        SizedBox(
-                          width: 54,
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            onChanged: provider.setNomorFDFromString,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryBlue,
-                            ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                              isDense: true,
-                            ),
-                            controller: TextEditingController(
-                              text: provider.nomorFDFormatted,
+                  : Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // Minus button
+                          _SmallStepperButton(
+                            icon: Icons.remove,
+                            onTap: () =>
+                                provider.setNomorFD(provider.nomorFD - 1),
+                            enabled: provider.nomorFD > 1,
+                          ),
+                          const SizedBox(width: 6),
+                          // Editable number via dialog
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _showFDInputDialog(context, provider),
+                              child: Text(
+                                provider.nomorFDFormatted,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppTheme.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        // Plus button
-                        _SmallStepperButton(
-                          icon: Icons.add,
-                          onTap: () =>
-                              provider.setNomorFD(provider.nomorFD + 1),
-                          enabled: true,
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          // Plus button
+                          _SmallStepperButton(
+                            icon: Icons.add,
+                            onTap: () =>
+                                provider.setNomorFD(provider.nomorFD + 1),
+                            enabled: true,
+                          ),
+                        ],
+                      ),
                     ),
             ],
           ),
@@ -492,16 +502,13 @@ class InputFormSection extends StatelessWidget {
                 enabled: provider.durasi > AppConstants.minDurasi,
               ),
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showDurasiInputDialog(context, provider),
-                  child: Text(
-                    '${provider.durasi}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppTheme.textPrimary,
-                    ),
+                child: Text(
+                  '${provider.durasi}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppTheme.textPrimary,
                   ),
                 ),
               ),
@@ -518,32 +525,33 @@ class InputFormSection extends StatelessWidget {
     );
   }
 
-  void _showDurasiInputDialog(
-      BuildContext context, AntrianProvider provider) {
-    final controller =
-        TextEditingController(text: provider.durasi.toString());
+  void _showFDInputDialog(BuildContext context, AntrianProvider provider) {
+    final controller = TextEditingController(text: provider.nomorFD.toString());
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Input Durasi (Hari)'),
+        title: const Text('Input Nomor FD'),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Masukkan jumlah hari',
-          ),
+          decoration: const InputDecoration(hintText: 'Masukkan nomor FD'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () {
-              provider.setDurasiFromString(controller.text);
+              provider.setNomorFDFromString(controller.text);
               Navigator.pop(ctx);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('OK'),
           ),
         ],

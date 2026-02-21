@@ -288,10 +288,9 @@ class AntrianProvider extends ChangeNotifier {
       // Save to database
       await db.insertAntrian(antrian.toMap());
 
-      if (_isAutoFD) {
-        _lastAutoFD = _nomorFD;
-        await db.saveLastFDNumber(_lastAutoFD);
-      }
+      // Update auto FD base if successful (even if manually entered)
+      _lastAutoFD = _nomorFD;
+      await db.saveLastFDNumber(_lastAutoFD);
 
       // Generate & print PDF
       final pdfDoc = await _generatePdf(antrian);
@@ -307,10 +306,11 @@ class AntrianProvider extends ChangeNotifier {
         ),
       );
 
-      // Auto-increment after printing
+      // Auto-increment after printing if auto-fd is enabled
+      // The logic requires setting _nomorFD to _lastAutoFD + 1 for the next ticket
+      // if auto-FD is currently active.
       if (_isAutoFD) {
-        _nomorFD++;
-        _lastAutoFD = _nomorFD - 1;
+        _nomorFD = _lastAutoFD + 1;
       }
 
       // Reset form
@@ -322,6 +322,7 @@ class AntrianProvider extends ChangeNotifier {
       _selectedSubSatker = '';
       _durasi = AppConstants.defaultDurasi;
 
+      // Ensure form displays the next FD correctly
       if (_isAutoFD) {
         _nomorFD = _lastAutoFD + 1;
       }
@@ -422,14 +423,14 @@ class AntrianProvider extends ChangeNotifier {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.Text(
-                'SIASAT',
+                'E-Ticket',
                 style: pw.TextStyle(
                   fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
               pw.Text(
-                'Sistem Antrean Satker',
+                'Pelayanan Terpadu',
                 style: const pw.TextStyle(fontSize: 7),
               ),
               pw.SizedBox(height: 8),
@@ -527,7 +528,7 @@ class AntrianProvider extends ChangeNotifier {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                '© ${DateTime.now().year} SIASAT',
+                '© ${DateTime.now().year} E-Ticket',
                 style: const pw.TextStyle(
                   fontSize: 6,
                   color: PdfColors.grey600,
