@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=E-Tiket
+Comment=Sistem Pelayanan Terpadu - E-Tiket
+Exec=e-tiket
+Icon=io.etiket
+Categories=Utility;Office;
+Terminal=false

@@ -8,8 +8,8 @@ class SubSatker {
 }
 
 class AppConstants {
-  static const String appTitle = 'SIASAT';
-  static const String appSubtitle = 'Sistem Antrean Satker';
+  static const String appTitle = 'E-Tiket';
+  static const String appSubtitle = 'Pelayanan Terpadu';
   static const String appVersion = 'v2.0';
   static const String receiptTitle = 'TANDA TERIMA BERKAS';
 

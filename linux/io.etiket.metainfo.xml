@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.etiket</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name>E-Tiket</name>
+  <summary>Sistem Pelayanan Terpadu - E-Tiket</summary>
+  <description>
+    <p>E-Tiket adalah sistem manajemen antrian desktop yang dirancang khusus untuk institusi pemerintah Indonesia (Satuan Kerja).</p>
+    <p>Aplikasi ini mengelola alur kerja pengajuan dan pengambilan dokumen dengan pembuatan tanda terima profesional dan pelacakan data komprehensif.</p>
+  </description>
+  <icon type="stock">io.etiket</icon>
+</component>

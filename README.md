@@ -1,10 +1,10 @@
-# SIASAT - Sistem Antrean Satker
+# E-Tiket - Pelayanan Terpadu
 
 <div align="center">
 
-![SIASAT Logo](assets/images/siasat_logo.png)
+![E-Tiket Logo](assets/images/logo.png)
 
-**Sistem Antrean Satuan Kerja**
+**Sistem Pelayanan Terpadu**
 
 A professional queue management system designed for Indonesian government institutions.
 
@@ -32,7 +32,7 @@ A professional queue management system designed for Indonesian government instit
 
 ## About
 
-**SIASAT** (Sistem Antrean Satker) is a desktop-based queue management system specifically designed for Indonesian government institutions (Satuan Kerja). The application manages document submission and retrieval workflows with professional receipt generation and comprehensive data tracking.
+**E-Tiket** (Pelayanan Terpadu) is a desktop-based queue management system specifically designed for Indonesian government institutions (Satuan Kerja). The application manages document submission and retrieval workflows with professional receipt generation and comprehensive data tracking.
 
 ### Key Workflow
 
@@ -121,17 +121,17 @@ The system manages two main processes:
 1. Download the latest `.exe` installer from [Releases](https://github.com/yourusername/sistem_antrean_satker/releases)
 2. Run the installer as Administrator
 3. Follow the installation wizard
-4. Launch SIASAT from the desktop shortcut
+4. Launch E-Tiket from the desktop shortcut
 
 ### Linux Installation
 
 1. Download the latest `.deb` package from [Releases](https://github.com/yourusername/sistem_antrean_satker/releases)
 2. Install using package manager:
    ```bash
-   sudo dpkg -i siasat_<version>_amd64.deb
+   sudo dpkg -i etiket_<version>_amd64.deb
    sudo apt-get install -f  # Fix dependencies if needed
    ```
-3. Launch SIASAT from application menu
+3. Launch E-Tiket from application menu
 
 ---
 

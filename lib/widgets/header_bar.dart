@@ -209,7 +209,7 @@ class HeaderBar extends StatelessWidget {
 
     if (directoryPath != null) {
       final fileName =
-          'backup_siasat_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.db';
+          'backup_etiket_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.db';
       final fullPath = p.join(directoryPath, fileName);
 
       if (context.mounted) {

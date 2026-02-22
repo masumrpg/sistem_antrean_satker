@@ -427,7 +427,7 @@ class InputFormSection extends StatelessWidget {
                           _SmallStepperButton(
                             icon: Icons.remove,
                             onTap: () =>
-                                provider.setNomorFD(provider.nomorFD - 1),
+                                provider.decrementNomorFDManual(),
                             enabled: provider.nomorFD > 1,
                           ),
                           const SizedBox(width: 6),
@@ -456,7 +456,7 @@ class InputFormSection extends StatelessWidget {
                           _SmallStepperButton(
                             icon: Icons.add,
                             onTap: () =>
-                                provider.setNomorFD(provider.nomorFD + 1),
+                                provider.incrementNomorFDManual(),
                             enabled: true,
                           ),
                         ],
@@ -544,9 +544,14 @@ class InputFormSection extends StatelessWidget {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
-              provider.setNomorFDFromString(controller.text);
-              Navigator.pop(ctx);
+            onPressed: () async {
+              final parsed = int.tryParse(controller.text);
+              if (parsed != null && parsed >= 1) {
+                await provider.setNomorFDManualWithAutoSync(parsed);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,

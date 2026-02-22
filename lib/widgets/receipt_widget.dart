@@ -196,7 +196,7 @@ class ReceiptWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '© ${DateTime.now().year} SIASAT',
+            '© ${DateTime.now().year} E-Tiket',
             style: TextStyle(
               fontSize: 8,
               color: textColor.withValues(alpha: 0.5),

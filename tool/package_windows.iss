@@ -1,6 +1,6 @@
-#define AppName "SIASAT"
-#define AppExeName "sistem_antrean_satker.exe"
-#define AppPublisher "ma-sum"
+#define AppName "E-Tiket"
+#define AppExeName "e-tiket.exe"
+#define AppPublisher "Ma'sum"
 #define BuildDir "..\build\windows\x64\runner\Release"
 #define DistDir "..\dist"
 
@@ -12,7 +12,7 @@ AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 DisableProgramGroupPage=yes
 OutputDir={#DistDir}
-OutputBaseFilename=SIASAT_setup
+OutputBaseFilename=E-Tiket_setup
 SetupIconFile=..\assets\images\logo.ico
 Compression=lzma
 SolidCompression=yes

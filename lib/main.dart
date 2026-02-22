@@ -146,7 +146,7 @@ class AntreanPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               color: isDark ? AppTheme.bgDark : AppTheme.bgLight,
               child: Text(
-                '© ${DateTime.now().year} SIASAT - Sistem Antrean Satker ${AppConstants.appVersion}. Developed for Windows & Linux Desktop.',
+                '© ${DateTime.now().year} E-Tiket - Pelayanan Terpadu ${AppConstants.appVersion}. Developed for Windows & Linux Desktop.',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                 textAlign: TextAlign.center,
               ),

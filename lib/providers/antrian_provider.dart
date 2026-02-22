@@ -170,6 +170,50 @@ class AntrianProvider extends ChangeNotifier {
     }
   }
 
+  /// Set manual FD number with real-time auto sync
+  /// If the number is already used, auto FD will be set to next number
+  /// If not used, auto FD will follow this manual number
+  Future<void> setNomorFDManualWithAutoSync(int value) async {
+    if (value >= 1) {
+      _nomorFD = value;
+
+      // Check if this FD number is already used today
+      bool isUsed = await checkFDConflict(value);
+
+      if (isUsed) {
+        // If used (already printed), set _lastAutoFD to current value
+        // so next auto increment will be value + 1
+        _lastAutoFD = value;
+      } else {
+        // If not used, set _lastAutoFD to value - 1
+        // so next auto increment will be value
+        _lastAutoFD = value - 1;
+      }
+
+      notifyListeners();
+    }
+  }
+
+  /// Increment manual FD with auto sync
+  void incrementNomorFDManual() {
+    if (!_isAutoFD) {
+      var newValue = _nomorFD + 1;
+      if (newValue >= 1) {
+        setNomorFDManualWithAutoSync(newValue);
+      }
+    }
+  }
+
+  /// Decrement manual FD with auto sync
+  void decrementNomorFDManual() {
+    if (!_isAutoFD) {
+      var newValue = _nomorFD - 1;
+      if (newValue >= 1) {
+        setNomorFDManualWithAutoSync(newValue);
+      }
+    }
+  }
+
   void setDurasi(int value) {
     if (value >= AppConstants.minDurasi && value <= AppConstants.maxDurasi) {
       _durasi = value;

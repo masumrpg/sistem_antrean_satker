@@ -1,6 +1,6 @@
 {
-    "name": "sistem_antrean_satker",
-    "short_name": "sistem_antrean_satker",
+    "name": "e-tiket",
+    "short_name": "e-tiket",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
