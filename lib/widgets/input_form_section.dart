@@ -502,26 +502,63 @@ class InputFormSection extends StatelessWidget {
                 enabled: provider.durasi > AppConstants.minDurasi,
               ),
               Expanded(
-                child: Text(
-                  '${provider.durasi}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppTheme.textPrimary,
+                child: GestureDetector(
+                  onTap: () => _showDurasiInputDialog(context, provider),
+                  child: Text(
+                    '${provider.durasi}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppTheme.textPrimary,
+                    ),
                   ),
                 ),
               ),
-              // Plus button
+              // Plus button (no limit)
               _StepperButton(
                 icon: Icons.add,
                 onTap: provider.incrementDurasi,
-                enabled: provider.durasi < AppConstants.maxDurasi,
+                enabled: true,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  void _showDurasiInputDialog(BuildContext context, AntrianProvider provider) {
+    final controller = TextEditingController(text: provider.durasi.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Input Durasi (Hari)'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Masukkan durasi dalam hari'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              provider.setDurasiFromString(controller.text);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 

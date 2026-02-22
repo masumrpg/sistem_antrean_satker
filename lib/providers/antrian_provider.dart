@@ -215,7 +215,7 @@ class AntrianProvider extends ChangeNotifier {
   }
 
   void setDurasi(int value) {
-    if (value >= AppConstants.minDurasi && value <= AppConstants.maxDurasi) {
+    if (value >= AppConstants.minDurasi) {
       _durasi = value;
       notifyListeners();
     }
@@ -223,7 +223,7 @@ class AntrianProvider extends ChangeNotifier {
 
   void setDurasiFromString(String value) {
     final parsed = int.tryParse(value);
-    if (parsed != null && parsed >= 1) {
+    if (parsed != null && parsed >= AppConstants.minDurasi) {
       _durasi = parsed;
       notifyListeners();
     }
@@ -243,10 +243,8 @@ class AntrianProvider extends ChangeNotifier {
   }
 
   void incrementDurasi() {
-    if (_durasi < AppConstants.maxDurasi) {
-      _durasi++;
-      notifyListeners();
-    }
+    _durasi++;
+    notifyListeners();
   }
 
   void decrementDurasi() {

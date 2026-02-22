@@ -22,6 +22,6 @@ class AppConstants {
 
   static const int defaultFDStart = 1;
   static const int defaultDurasi = 3;
-  static const int maxDurasi = 5;
   static const int minDurasi = 1;
+  // No max durasi limit
 }
